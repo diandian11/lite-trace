@@ -60,7 +60,10 @@
           </cover-view>
           <cover-view wx:if="{{mapFull}}" class="fm-bottom">
             <cover-view class="fm-btn fm-btn-ghost" catchtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</cover-view>
-            <cover-view class="fm-btn fm-btn-main" catchtap="finishLive">✓ 结束保存</cover-view>
+            <cover-view class="fm-btn fm-btn-main" catchtouchstart="startHoldFinish" catchtouchend="cancelHoldFinish" catchtouchcancel="cancelHoldFinish" catchtap="holdFinishHint">
+              <cover-view class="fm-hold-fill" style="width:{{finishProgress}}%"></cover-view>
+              <cover-view class="fm-hold-text">{{holding ? '⏳ ' + holdSecLeft + 's' : '长按 3 秒结束'}}</cover-view>
+            </cover-view>
           </cover-view>
         </map>
         <view class="heat-legend" wx:if="{{!mapFull}}">
@@ -89,7 +92,10 @@
     <view wx:if="{{liveOn}}" class="live-btns">
       <button class="btn-ghost" bindtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</button>
       <view class="gap"></view>
-      <button class="btn-main live-finish" bindtap="finishLive">✓ 结束并保存</button>
+      <view class="btn-main live-finish hold-btn" bindtouchstart="startHoldFinish" bindtouchend="cancelHoldFinish" bindtouchcancel="cancelHoldFinish" bindtap="holdFinishHint">
+        <view class="hold-fill" style="width:{{finishProgress}}%"></view>
+        <view class="hold-text">{{holding ? '⏳ 再按住 ' + holdSecLeft + ' 秒…' : '✓ 长按 3 秒结束'}}</view>
+      </view>
     </view>
   </view>
 

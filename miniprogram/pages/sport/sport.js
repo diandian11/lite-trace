@@ -42,6 +42,7 @@ Page({
     outDist: '0.00', outPace: '--\'--', heading: '--',
     mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false,
     outTypeIndex: -1, // -1=自动识别，0慢走 1慢跑 2快跑 3骑行
+    finishProgress: 0, holding: false, holdSecLeft: '', // 长按结束进度
     // 记录列表日期浏览
     viewDate: '', todayStr: ''
   },
@@ -65,6 +66,7 @@ Page({
   },
   onShow() { this.refresh() },
   onHide() {
+    this.clearHold()
     if (this.data.liveOn && !this.data.livePaused && this.data.liveMode === 'indoor') {
       this.pauseLive(true)
     }
@@ -366,11 +368,44 @@ Page({
   },
 
   teardownLive() {
+    this.clearHold()
     if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = null }
     this.stopAccel()
     this.stopLoc()
     this.stopCompass()
     this.setData({ liveOn: false, livePaused: false, mapFull: false })
+  },
+
+  // ---------- 长按3秒结束（防误触，带进度条） ----------
+  startHoldFinish() {
+    if (!this.data.liveOn || this.holdTimer) return
+    const self = this
+    this.holdStartTs = Date.now()
+    this.setData({ holding: true, finishProgress: 0, holdSecLeft: '3.0' })
+    this.holdTimer = setInterval(function () {
+      const el = Date.now() - self.holdStartTs
+      if (el >= 3000) {
+        self.clearHold()
+        wx.vibrateShort({ type: 'medium' })
+        self.finishLive()
+      } else {
+        self.setData({
+          finishProgress: Math.round(el / 30),
+          holdSecLeft: ((3000 - el) / 1000).toFixed(1)
+        })
+      }
+    }, 80)
+  },
+  cancelHoldFinish() {
+    if (!this.holdTimer) return
+    this.clearHold()
+  },
+  holdFinishHint() {
+    if (this.data.liveOn) wx.showToast({ title: '长按满 3 秒才能结束', icon: 'none' })
+  },
+  clearHold() {
+    if (this.holdTimer) { clearInterval(this.holdTimer); this.holdTimer = null }
+    if (this.data.holding) this.setData({ holding: false, finishProgress: 0, holdSecLeft: '' })
   },
 
   finishLive() {

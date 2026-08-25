@@ -135,10 +135,24 @@
   gap: 24rpx;
 }
 .fm-btn {
+  position: relative;
+  overflow: hidden;
   font-size: 30rpx;
   font-weight: 600;
   padding: 22rpx 52rpx;
   border-radius: 44rpx;
+}
+.fm-hold-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.35);
+}
+.fm-hold-text {
+  position: relative;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
 }
 .fm-btn-ghost {
   background: rgba(255,255,255,0.95);
@@ -194,6 +208,12 @@
   flex: 1;
   margin: 0;
 }
+.live-btns .btn-ghost {
+  height: 88rpx;
+  line-height: 84rpx;
+  padding: 0;
+  box-sizing: border-box;
+}
 .btn-ghost {
   background: #ffffff;
   color: #0D9488;
@@ -203,6 +223,29 @@
   padding: 8rpx 0;
 }
 .live-finish { margin-left: 20rpx !important; }
+
+/* 长按3秒结束按钮（进度条填充） */
+.hold-btn {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  box-sizing: border-box;
+}
+.hold-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.35);
+}
+.hold-text {
+  position: relative;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---- 记录列表日期导航 ---- */
 .date-nav {
