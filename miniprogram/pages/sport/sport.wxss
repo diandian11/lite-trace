@@ -73,6 +73,76 @@
   border-radius: 16rpx;
   margin-top: 20rpx;
 }
+.map-full {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  border-radius: 0;
+}
+
+/* 全屏地图上的覆盖层（cover-view） */
+.fm-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 28rpx 24rpx 20rpx;
+  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.fm-exit {
+  background: rgba(0,0,0,0.6);
+  color: #ffffff;
+  font-size: 26rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 32rpx;
+}
+.fm-dist {
+  color: #ffffff;
+  font-size: 72rpx;
+  font-weight: 700;
+  margin-top: 16rpx;
+}
+.fm-time {
+  color: rgba(255,255,255,0.9);
+  font-size: 26rpx;
+  margin-top: 6rpx;
+}
+.fm-bottom {
+  position: absolute;
+  bottom: 60rpx;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+}
+.fm-btn {
+  font-size: 30rpx;
+  padding: 20rpx 48rpx;
+  border-radius: 40rpx;
+}
+.fm-btn-ghost {
+  background: rgba(255,255,255,0.9);
+  color: #0D9488;
+}
+.fm-btn-main {
+  background: #10B981;
+  color: #ffffff;
+}
+
+.live-auto {
+  text-align: center;
+  font-size: 26rpx;
+  color: #0D9488;
+  font-weight: 600;
+  margin-top: 20rpx;
+}
 
 .live-heading {
   text-align: center;

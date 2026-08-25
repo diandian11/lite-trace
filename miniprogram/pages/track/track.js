@@ -26,11 +26,12 @@ Page({
     this.recIdx = idx
     const pts = store.getTrack(ts) || []
     this.setData({
-      rec: rec, day: day, dateLabel: day, pts: pts,
+      rec: rec, day: day, dateLabel: day,
       pace: geo.fmtPace(rec.minutes * 60, (rec.distance || 0) * 1000),
       mapLat: pts.length ? pts[0].latitude : 39.908,
       mapLng: pts.length ? pts[0].longitude : 116.397,
-      poly: pts.length ? [{ points: pts, color: '#10B981', width: 4, arrowLine: true }] : []
+      poly: pts.length ? [{ points: pts, color: '#10B981', width: 4, arrowLine: true }] : [],
+      mapFull: false
     })
     // 视野自动适配整条轨迹
     if (pts.length > 1) {
@@ -40,6 +41,8 @@ Page({
       }, 400)
     }
   },
+
+  toggleMapFull() { this.setData({ mapFull: !this.data.mapFull }) },
 
   del() {
     const self = this

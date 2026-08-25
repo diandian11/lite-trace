@@ -1,6 +1,13 @@
 <view class="page" wx:if="{{rec}}">
-  <map id="trackmap" class="track-map" latitude="{{mapLat}}" longitude="{{mapLng}}"
-       scale="15" polyline="{{poly}}" enable-zoom enable-scroll></map>
+  <map id="trackmap" class="track-map {{mapFull ? 'map-full' : ''}}" latitude="{{mapLat}}" longitude="{{mapLng}}"
+       scale="15" polyline="{{poly}}" enable-zoom enable-scroll bindtap="toggleMapFull">
+    <cover-view wx:if="{{mapFull}}" class="fm-top">
+      <cover-view class="fm-exit" catchtap="toggleMapFull">✕ 退出全屏</cover-view>
+      <cover-view class="fm-dist">{{rec.distance}} km</cover-view>
+      <cover-view class="fm-time">{{rec.minutes}} 分钟 · {{pace}}/km{{rec.count ? ' · ' + rec.count + ' 步' : ''}}</cover-view>
+    </cover-view>
+  </map>
+  <view class="map-tip" wx:if="{{!mapFull}}">点击地图可全屏查看 🗺</view>
 
   <view class="card">
     <view class="flex-row">

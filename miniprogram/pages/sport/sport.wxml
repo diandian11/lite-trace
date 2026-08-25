@@ -16,15 +16,12 @@
 
     <!-- 室内 -->
     <block wx:if="{{liveMode === 'indoor'}}">
-      <view wx:if="{{!liveOn}}" class="live-type-row">
-        <view class="live-type {{liveTypeIndex === 0 ? 'on' : ''}}" bindtap="setLiveType" data-i="0">🚶 快走</view>
-        <view class="live-type {{liveTypeIndex === 1 ? 'on' : ''}}" bindtap="setLiveType" data-i="1">🏃 慢跑</view>
-      </view>
       <view wx:if="{{!liveOn}}">
-        <view class="live-tip">点开始后带着手机走即可（建议拿在手上或放口袋）；切出小程序会自动暂停，回来点继续</view>
+        <view class="live-tip">点开始后带着手机走即可，快走/慢跑自动识别；切出小程序会自动暂停，回来点继续</view>
         <button class="btn-main" bindtap="startLive">▶ 开始记录</button>
       </view>
       <view wx:if="{{liveOn}}">
+        <view class="live-auto">{{autoLabel}}</view>
         <view class="live-steps-wrap">
           <view class="live-steps">{{liveSteps}}</view>
           <view class="live-steps-unit">步</view>
@@ -39,17 +36,24 @@
 
     <!-- 户外 -->
     <block wx:if="{{liveMode === 'outdoor'}}">
-      <view wx:if="{{!liveOn}}" class="live-type-row">
-        <view class="live-type {{outTypeIndex === 0 ? 'on' : ''}}" bindtap="setOutType" data-i="0">🚶 户外快走</view>
-        <view class="live-type {{outTypeIndex === 1 ? 'on' : ''}}" bindtap="setOutType" data-i="1">🏃 户外慢跑</view>
-      </view>
       <view wx:if="{{!liveOn}}">
-        <view class="live-tip">开始后记录 GPS 轨迹：距离、配速、步数一并统计，锁屏揣兜里也继续记（省电模式可能中断）；结束保存后可在地图回看轨迹</view>
+        <view class="live-tip">记录 GPS 轨迹与距离，快走/慢跑按配速自动识别，锁屏揣兜里也继续记；结束后可地图回看轨迹</view>
         <button class="btn-main" bindtap="startLive">▶ 开始户外记录</button>
       </view>
       <view wx:if="{{liveOn}}">
-        <map class="live-map" latitude="{{mapLat}}" longitude="{{mapLng}}" scale="16"
-             polyline="{{poly}}" show-location enable-zoom enable-scroll></map>
+        <view class="live-auto">{{autoLabel}} · 点击地图可全屏</view>
+        <map class="live-map {{mapFull ? 'map-full' : ''}}" latitude="{{mapLat}}" longitude="{{mapLng}}" scale="16"
+             polyline="{{poly}}" show-location enable-zoom enable-scroll bindtap="toggleMapFull">
+          <cover-view wx:if="{{mapFull}}" class="fm-top">
+            <cover-view class="fm-exit" catchtap="toggleMapFull">✕ 退出全屏</cover-view>
+            <cover-view class="fm-dist">{{outDist}} km</cover-view>
+            <cover-view class="fm-time">{{liveTime}} · {{outPace}}/km · 🧭{{heading}}</cover-view>
+          </cover-view>
+          <cover-view wx:if="{{mapFull}}" class="fm-bottom">
+            <cover-view class="fm-btn fm-btn-ghost" catchtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</cover-view>
+            <cover-view class="fm-btn fm-btn-main" catchtap="finishLive">✓ 结束保存</cover-view>
+          </cover-view>
+        </map>
         <view class="live-steps-wrap">
           <view class="live-steps">{{outDist}}</view>
           <view class="live-steps-unit">公里</view>

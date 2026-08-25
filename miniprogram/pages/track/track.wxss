@@ -4,6 +4,50 @@
   height: 560rpx;
   border-radius: 20rpx;
 }
+.map-tip {
+  text-align: center;
+  font-size: 22rpx;
+  color: #9CA3AF;
+  margin: 12rpx 0 4rpx;
+}
+.map-full {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  border-radius: 0;
+}
+.fm-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 28rpx 24rpx 20rpx;
+  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.fm-exit {
+  background: rgba(0,0,0,0.6);
+  color: #ffffff;
+  font-size: 26rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 32rpx;
+}
+.fm-dist {
+  color: #ffffff;
+  font-size: 72rpx;
+  font-weight: 700;
+  margin-top: 16rpx;
+}
+.fm-time {
+  color: rgba(255,255,255,0.9);
+  font-size: 26rpx;
+  margin-top: 6rpx;
+}
 .track-meta {
   display: flex;
   justify-content: space-around;
