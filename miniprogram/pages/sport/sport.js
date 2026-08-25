@@ -1,11 +1,15 @@
 const store = require('../../utils/store')
 const sport = require('../../utils/sport')
 const stepcounter = require('../../utils/stepcounter')
+const geo = require('../../utils/geo')
 
-// 实时计步支持的类型（与手动打卡共用 MET 库）
-const LIVE_TYPES = [
+const IN_TYPES = [
   { key: 'walk', name: '快走', emoji: '🚶' },
   { key: 'run', name: '慢跑', emoji: '🏃' }
+]
+const OUT_TYPES = [
+  { key: 'walk', name: '户外快走', emoji: '🚶' },
+  { key: 'run', name: '户外慢跑', emoji: '🏃' }
 ]
 
 function fmtTime(sec) {
@@ -20,9 +24,12 @@ Page({
     intensityNames: [], intensityIndex: 1,
     minutes: '30', count: '',
     records: [], totalMin: 0, totalKcal: 0,
-    // 实时计步
-    liveTypeIndex: 0, liveOn: false, livePaused: false,
-    liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0
+    // 实时记录（室内计步 / 户外GPS）
+    liveMode: 'indoor', liveTypeIndex: 0, outTypeIndex: 0,
+    liveOn: false, livePaused: false,
+    liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0,
+    outDist: '0.00', outPace: '--\'--', heading: '--',
+    mapLat: 39.908, mapLng: 116.397, poly: []
   },
 
   onLoad() {
@@ -32,13 +39,21 @@ Page({
     })
     this.counter = null
     this.liveTimer = null
-    this.liveSec = 0
     this.stepTs = []
+    // 户外状态
+    this.trackPts = []
+    this.trackM = 0
+    this.lastLoc = null
+    this.lastMapSet = 0
+    this.lastHeading = -99
   },
   onShow() { this.refresh() },
-  // 切走/锁屏自动暂停，防回调失效与计时漂移
+  // 室内：切走/锁屏自动暂停（加速度计后台必停）
+  // 户外：保持运行（requiredBackgroundModes 已声明 location，后台GPS继续，时间用墙钟计）
   onHide() {
-    if (this.data.liveOn && !this.data.livePaused) this.pauseLive(true)
+    if (this.data.liveOn && !this.data.livePaused && this.data.liveMode === 'indoor') {
+      this.pauseLive(true)
+    }
   },
   onUnload() { this.teardownLive() },
 
@@ -79,17 +94,42 @@ Page({
     this.refresh()
   },
   del(e) {
-    store.removeOfDay(store.K.sport, store.today(), +e.currentTarget.dataset.idx)
+    const idx = +e.currentTarget.dataset.idx
+    const rec = this.data.records[idx]
+    if (rec && rec.hasTrack) store.removeTrack(rec.ts)
+    store.removeOfDay(store.K.sport, store.today(), idx)
     this.refresh()
   },
+  openTrack(e) {
+    const idx = +e.currentTarget.dataset.idx
+    const rec = this.data.records[idx]
+    if (!rec || !rec.hasTrack) return
+    wx.navigateTo({
+      url: '/pages/track/track?day=' + store.today() + '&ts=' + rec.ts
+    })
+  },
 
-  // ---------- 实时计步 ----------
+  // ---------- 实时记录：模式与类型 ----------
+  setLiveMode(e) {
+    if (this.data.liveOn) return
+    this.setData({ liveMode: e.currentTarget.dataset.m })
+  },
   setLiveType(e) {
     if (this.data.liveOn) return
     this.setData({ liveTypeIndex: +e.currentTarget.dataset.i })
   },
+  setOutType(e) {
+    if (this.data.liveOn) return
+    this.setData({ outTypeIndex: +e.currentTarget.dataset.i })
+  },
 
-  // 监听器只注册一次，靠 liveOn/livePaused 门槛控制；避免重复 on 导致回调叠加
+  // ---------- 墙钟计时（后台冻结不漂移） ----------
+  elapsedSec() {
+    if (!this.liveStartTs) return this.liveSec || 0
+    return Math.max(0, Math.floor((Date.now() - this.liveStartTs - this.pausedMs) / 1000))
+  },
+
+  // ---------- 传感器统一管理 ----------
   ensureAccelListener() {
     if (this.accelBound) return
     const self = this
@@ -103,80 +143,173 @@ Page({
     })
     this.accelBound = true
   },
-
-  // Android 上传感器已开启时再 start 会报 "has enable, should stop pre operation"
-  // 统一走 先停(complete)再开 的顺序，无论之前状态如何都能启动
+  // Android：传感器已开启时再 start 会报 has enable → 先静默停再开
   startAccelSafe() {
     const self = this
     wx.stopAccelerometer({
       complete() {
         wx.startAccelerometer({
           interval: 'game',
+          fail(res) { console.error('accel fail', res) }
+        })
+      }
+    })
+  },
+  stopAccel() {
+    wx.stopAccelerometer()
+    if (this.accelBound) { wx.offAccelerometerChange(); this.accelBound = false }
+  },
+
+  ensureLocListener() {
+    if (this.locBound) return
+    const self = this
+    wx.onLocationChange(function (res) {
+      if (!self.data.liveOn || self.data.livePaused) return
+      if (res.accuracy != null && res.accuracy > 50) return // 精度太差丢弃
+      const p = { latitude: +res.latitude.toFixed(6), longitude: +res.longitude.toFixed(6) }
+      if (!self.lastLoc) {
+        self.lastLoc = p
+        self.trackPts.push(p)
+        self.setData({ mapLat: p.latitude, mapLng: p.longitude })
+        return
+      }
+      const d = geo.distM(self.lastLoc, p)
+      if (d < 3) return // 抗抖动：3米内忽略
+      self.lastLoc = p
+      self.trackPts.push(p)
+      self.trackM += d
+      // 节流刷新地图与距离（≥2.5s 一次）
+      const now = Date.now()
+      if (now - self.lastMapSet > 2500) {
+        self.lastMapSet = now
+        self.setData({
+          outDist: geo.fmtKm(self.trackM),
+          poly: [{ points: self.trackPts.slice(), color: '#10B981', width: 4, arrowLine: true }],
+          mapLat: p.latitude, mapLng: p.longitude
+        })
+      }
+    })
+    this.locBound = true
+  },
+  startLocSafe() {
+    const self = this
+    wx.offLocationChange()
+    this.locBound = false
+    wx.stopLocationUpdate({
+      complete() {
+        wx.startLocationUpdate({
+          success() { self.ensureLocListener() },
           fail(res) {
+            console.error('location fail', res)
             const msg = res && res.errMsg ? res.errMsg : JSON.stringify(res)
-            console.error('startAccelerometer fail:', res)
+            let title = '定位启动失败'
+            let content = String(msg).slice(0, 120)
+            if (/auth|deny/i.test(msg)) {
+              title = '需要位置权限'
+              content = '请在设置中允许「位置信息」，用于记录运动轨迹'
+            } else if (/privacy|104/i.test(msg)) {
+              title = '需要隐私声明'
+              content = '请在小程序后台「用户隐私保护指引」中声明收集「位置信息」后重试'
+            }
             wx.showModal({
-              title: '传感器启动失败',
-              content: String(msg || '未知错误').slice(0, 120),
-              showCancel: false,
-              confirmText: '知道了'
+              title: title, content: content, showCancel: false,
+              confirmText: '知道了',
+              complete() { self.teardownLive() }
             })
-            self.teardownLive()
           }
         })
       }
     })
   },
+  stopLoc() {
+    wx.stopLocationUpdate()
+    if (this.locBound) { wx.offLocationChange(); this.locBound = false }
+  },
 
+  ensureCompass() {
+    if (this.compassBound) return
+    const self = this
+    wx.onCompassChange(function (res) {
+      if (!self.data.liveOn || self.data.livePaused) return
+      const d = Math.round(res.direction)
+      if (Math.abs(d - self.lastHeading) < 8) return
+      self.lastHeading = d
+      self.setData({ heading: geo.headingName(d) + ' ' + d + '°' })
+    })
+    this.compassBound = true
+  },
+  stopCompass() {
+    if (this.compassBound) { wx.offCompassChange(); this.compassBound = false }
+  },
+
+  // ---------- 开始/暂停/结束 ----------
   startLive() {
     if (this.data.liveOn) return
+    const outdoor = this.data.liveMode === 'outdoor'
     this.counter = stepcounter.createStepCounter()
     this.stepTs = []
-    this.liveSec = 0
+    this.trackPts = []
+    this.trackM = 0
+    this.lastLoc = null
+    this.lastMapSet = 0
+    this.lastHeading = -99
+    this.liveStartTs = Date.now()
+    this.pausedMs = 0
+    this.lastResumeTs = Date.now()
     this.setData({
       liveOn: true, livePaused: false,
-      liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0
+      liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0,
+      outDist: '0.00', outPace: '--\'--', heading: '--', poly: []
     })
     wx.vibrateShort({ type: 'light' })
     this.ensureAccelListener()
     this.startAccelSafe()
+    if (outdoor) {
+      this.startLocSafe()
+      this.ensureCompass()
+    }
     const self = this
-    this.liveTimer = setInterval(function () {
-      if (!self.data.livePaused) { self.liveSec++; self.tickLive() }
-    }, 1000)
+    this.liveTimer = setInterval(function () { self.tickLive() }, 1000)
     this.tickLive()
   },
 
   tickLive() {
-    const t = LIVE_TYPES[this.data.liveTypeIndex]
-    const now = Date.now()
-    while (this.stepTs.length && now - this.stepTs[0] > 12000) this.stepTs.shift()
-    const cadence = this.stepTs.length >= 3 ? this.stepTs.length * 5 : 0  // 近12秒样本×5≈步/分
-    this.setData({
-      liveTime: fmtTime(this.liveSec),
-      liveCadence: cadence,
-      liveKcal: sport.kcal(t.key, this.liveSec / 60, this.weightKg(), 'mid')
-    })
+    const sec = this.elapsedSec()
+    const outdoor = this.data.liveMode === 'outdoor'
+    const t = outdoor ? OUT_TYPES[this.data.outTypeIndex] : IN_TYPES[this.data.liveTypeIndex]
+    const patch = { liveTime: fmtTime(sec), liveKcal: sport.kcal(t.key, sec / 60, this.weightKg(), 'mid') }
+    if (outdoor) {
+      patch.outPace = geo.fmtPace(sec, this.trackM)
+    } else {
+      const now = Date.now()
+      while (this.stepTs.length && now - this.stepTs[0] > 12000) this.stepTs.shift()
+      patch.liveCadence = this.stepTs.length >= 3 ? this.stepTs.length * 5 : 0
+    }
+    this.setData(patch)
   },
 
   pauseLive(silent) {
     if (!this.data.liveOn || this.data.livePaused) return
+    this.pausedMs += Date.now() - this.lastResumeTs
     if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = null }
-    wx.stopAccelerometer()
-    wx.offAccelerometerChange()
+    if (this.data.liveMode === 'indoor') this.stopAccel()
+    else { this.stopAccel(); this.stopLoc() }
     this.setData({ livePaused: true })
     if (!silent) wx.showToast({ title: '已暂停', icon: 'none' })
   },
 
   resumeLive() {
     if (!this.data.liveOn || !this.data.livePaused) return
+    this.lastResumeTs = Date.now()
     this.setData({ livePaused: false })
     this.ensureAccelListener()
     this.startAccelSafe()
+    if (this.data.liveMode === 'outdoor') {
+      this.startLocSafe()
+      this.ensureCompass()
+    }
     const self = this
-    this.liveTimer = setInterval(function () {
-      if (!self.data.livePaused) { self.liveSec++; self.tickLive() }
-    }, 1000)
+    this.liveTimer = setInterval(function () { self.tickLive() }, 1000)
   },
 
   togglePause() {
@@ -186,31 +319,60 @@ Page({
 
   teardownLive() {
     if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = null }
-    wx.stopAccelerometer()
-    if (this.accelBound) { wx.offAccelerometerChange(); this.accelBound = false }
+    this.stopAccel()
+    this.stopLoc()
+    this.stopCompass()
     this.setData({ liveOn: false, livePaused: false })
   },
 
   finishLive() {
+    const outdoor = this.data.liveMode === 'outdoor'
+    const sec = this.elapsedSec()
     const steps = this.data.liveSteps
-    const sec = this.liveSec
-    const t = LIVE_TYPES[this.data.liveTypeIndex]
+    const t = outdoor ? OUT_TYPES[this.data.outTypeIndex] : IN_TYPES[this.data.liveTypeIndex]
     this.teardownLive()
-    if (steps < 5 || sec < 30) {
-      wx.showToast({ title: '步数太少，本次未保存', icon: 'none' })
-      return
+    if (outdoor) {
+      if (this.trackM < 50 || sec < 60) {
+        wx.showToast({ title: '距离或时长太短，本次未保存', icon: 'none' })
+        return
+      }
+      const minutes = Math.max(1, Math.round(sec / 60))
+      const kcal = sport.kcal(t.key, minutes, this.weightKg(), 'mid')
+      const ts = Date.now()
+      const rec = {
+        typeKey: t.key, name: t.name, emoji: t.emoji,
+        minutes: minutes, distance: +geo.fmtKm(this.trackM),
+        intensity: 'GPS', source: 'gps', kcal: kcal, ts: ts
+      }
+      if (steps >= 5) {
+        rec.count = steps
+        rec.unit = '步'
+        rec.cadence = Math.round(steps / (sec / 60))
+      }
+      store.pushOfDay(store.K.sport, store.today(), rec)
+      store.saveTrack(ts, geo.simplify(this.trackPts, 8, 800))
+      wx.vibrateShort({ type: 'light' })
+      wx.showToast({
+        title: '已保存 ' + geo.fmtKm(this.trackM) + ' 公里 +' + kcal + ' 千卡',
+        icon: 'success'
+      })
+    } else {
+      if (steps < 5 || sec < 30) {
+        wx.showToast({ title: '步数太少，本次未保存', icon: 'none' })
+        return
+      }
+      const minutes = Math.max(1, Math.round(sec / 60))
+      const kcal = sport.kcal(t.key, minutes, this.weightKg(), 'mid')
+      const cadence = Math.round(steps / (sec / 60))
+      store.pushOfDay(store.K.sport, store.today(), {
+        typeKey: t.key, name: t.name, emoji: t.emoji,
+        minutes: minutes, count: steps, unit: '步',
+        intensity: '实时', source: 'live', cadence: cadence,
+        kcal: kcal, ts: Date.now()
+      })
+      wx.vibrateShort({ type: 'light' })
+      wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
     }
-    const minutes = Math.max(1, Math.round(sec / 60))
-    const kcal = sport.kcal(t.key, minutes, this.weightKg(), 'mid')
-    const cadence = Math.round(steps / (sec / 60))
-    store.pushOfDay(store.K.sport, store.today(), {
-      typeKey: t.key, name: t.name, emoji: t.emoji,
-      minutes: minutes, count: steps, unit: '步',
-      intensity: '实时', source: 'live', cadence: cadence,
-      kcal: kcal, ts: Date.now()
-    })
-    wx.vibrateShort({ type: 'light' })
-    wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
     this.refresh()
   }
 })

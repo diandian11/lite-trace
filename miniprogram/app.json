@@ -4,8 +4,16 @@
     "pages/sport/sport",
     "pages/diet/diet",
     "pages/weight/weight",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/track/track"
   ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于户外运动时记录你的行走轨迹与距离"
+    }
+  },
+  "requiredPrivateInfos": ["getLocation", "onLocationChange", "startLocationUpdate"],
+  "requiredBackgroundModes": ["location"],
   "window": {
     "navigationBarBackgroundColor": "#10B981",
     "navigationBarTitleText": "轻迹 LiteTrace",

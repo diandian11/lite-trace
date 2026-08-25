@@ -1,46 +1,73 @@
 <view class="page">
 
-  <!-- 实时计步 -->
+  <!-- 实时记录 -->
   <view class="card">
     <view class="flex-row">
-      <view class="card-title" style="margin-bottom:0;">📡 实时计步</view>
+      <view class="card-title" style="margin-bottom:0;">📡 实时记录</view>
       <view class="gap"></view>
-      <view class="hint">{{liveOn ? (livePaused ? '已暂停' : '记录中…') : '前台计步'}}</view>
+      <view class="hint">{{liveOn ? (livePaused ? '已暂停' : (liveMode === 'outdoor' ? 'GPS 记录中…' : '计步中…')) : (liveMode === 'outdoor' ? '户外 GPS' : '室内计步')}}</view>
     </view>
 
-    <view wx:if="{{!liveOn}}">
-      <view class="live-type-row">
+    <!-- 模式切换 -->
+    <view class="live-type-row">
+      <view class="live-type {{liveMode === 'indoor' ? 'on' : ''}}" bindtap="setLiveMode" data-m="indoor">📱 室内计步</view>
+      <view class="live-type {{liveMode === 'outdoor' ? 'on' : ''}}" bindtap="setLiveMode" data-m="outdoor">🗺 户外 GPS</view>
+    </view>
+
+    <!-- 室内 -->
+    <block wx:if="{{liveMode === 'indoor'}}">
+      <view wx:if="{{!liveOn}}" class="live-type-row">
         <view class="live-type {{liveTypeIndex === 0 ? 'on' : ''}}" bindtap="setLiveType" data-i="0">🚶 快走</view>
         <view class="live-type {{liveTypeIndex === 1 ? 'on' : ''}}" bindtap="setLiveType" data-i="1">🏃 慢跑</view>
       </view>
-      <view class="live-tip">点开始后带着手机走即可（建议拿在手上或放口袋）；切出小程序会自动暂停，回来点继续</view>
-      <button class="btn-main" bindtap="startLive">▶ 开始记录</button>
-    </view>
+      <view wx:if="{{!liveOn}}">
+        <view class="live-tip">点开始后带着手机走即可（建议拿在手上或放口袋）；切出小程序会自动暂停，回来点继续</view>
+        <button class="btn-main" bindtap="startLive">▶ 开始记录</button>
+      </view>
+      <view wx:if="{{liveOn}}">
+        <view class="live-steps-wrap">
+          <view class="live-steps">{{liveSteps}}</view>
+          <view class="live-steps-unit">步</view>
+        </view>
+        <view class="live-meta">
+          <view class="live-m"><view class="live-mv">{{liveTime}}</view><view class="live-ml">时长</view></view>
+          <view class="live-m"><view class="live-mv">{{liveCadence}}</view><view class="live-ml">步频/分</view></view>
+          <view class="live-m"><view class="live-mv">{{liveKcal}}</view><view class="live-ml">预估千卡</view></view>
+        </view>
+      </view>
+    </block>
 
-    <view wx:if="{{liveOn}}">
-      <view class="live-steps-wrap">
-        <view class="live-steps">{{liveSteps}}</view>
-        <view class="live-steps-unit">步</view>
+    <!-- 户外 -->
+    <block wx:if="{{liveMode === 'outdoor'}}">
+      <view wx:if="{{!liveOn}}" class="live-type-row">
+        <view class="live-type {{outTypeIndex === 0 ? 'on' : ''}}" bindtap="setOutType" data-i="0">🚶 户外快走</view>
+        <view class="live-type {{outTypeIndex === 1 ? 'on' : ''}}" bindtap="setOutType" data-i="1">🏃 户外慢跑</view>
       </view>
-      <view class="live-meta">
-        <view class="live-m">
-          <view class="live-mv">{{liveTime}}</view>
-          <view class="live-ml">时长</view>
-        </view>
-        <view class="live-m">
-          <view class="live-mv">{{liveCadence}}</view>
-          <view class="live-ml">步频/分</view>
-        </view>
-        <view class="live-m">
-          <view class="live-mv">{{liveKcal}}</view>
-          <view class="live-ml">预估千卡</view>
-        </view>
+      <view wx:if="{{!liveOn}}">
+        <view class="live-tip">开始后记录 GPS 轨迹：距离、配速、步数一并统计，锁屏揣兜里也继续记（省电模式可能中断）；结束保存后可在地图回看轨迹</view>
+        <button class="btn-main" bindtap="startLive">▶ 开始户外记录</button>
       </view>
-      <view class="live-btns">
-        <button class="btn-ghost" bindtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</button>
-        <view class="gap"></view>
-        <button class="btn-main live-finish" bindtap="finishLive">✓ 结束并保存</button>
+      <view wx:if="{{liveOn}}">
+        <map class="live-map" latitude="{{mapLat}}" longitude="{{mapLng}}" scale="16"
+             polyline="{{poly}}" show-location enable-zoom enable-scroll></map>
+        <view class="live-steps-wrap">
+          <view class="live-steps">{{outDist}}</view>
+          <view class="live-steps-unit">公里</view>
+        </view>
+        <view class="live-meta">
+          <view class="live-m"><view class="live-mv">{{liveTime}}</view><view class="live-ml">时长</view></view>
+          <view class="live-m"><view class="live-mv">{{outPace}}</view><view class="live-ml">配速/公里</view></view>
+          <view class="live-m"><view class="live-mv">{{liveSteps}}</view><view class="live-ml">步数</view></view>
+          <view class="live-m"><view class="live-mv">{{liveKcal}}</view><view class="live-ml">预估千卡</view></view>
+        </view>
+        <view class="live-heading">🧭 {{heading}}</view>
       </view>
+    </block>
+
+    <view wx:if="{{liveOn}}" class="live-btns">
+      <button class="btn-ghost" bindtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</button>
+      <view class="gap"></view>
+      <button class="btn-main live-finish" bindtap="finishLive">✓ 结束并保存</button>
     </view>
   </view>
 
@@ -77,9 +104,11 @@
     </view>
     <view wx:if="{{records.length === 0}}" class="empty">今天还没运动，动起来 💪</view>
     <view wx:for="{{records}}" wx:key="ts" class="item">
-      <view class="item-main">
-        <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟</view>
-        <view class="item-sub">{{item.intensity}}{{item.count ? ' · ' + item.count + ' ' + (item.unit || '组') : ''}}</view>
+      <view class="item-main" bindtap="openTrack" data-idx="{{item.idx}}">
+        <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟{{item.hasTrack ? ' 📍' : ''}}</view>
+        <view class="item-sub">
+          {{item.intensity}}{{item.distance ? ' · ' + item.distance + ' 公里' : ''}}{{item.count ? ' · ' + item.count + ' ' + (item.unit || '组') : ''}}{{item.hasTrack ? ' · 点看轨迹' : ''}}
+        </view>
       </view>
       <view class="item-kcal">−{{item.kcal}}</view>
       <view class="item-del" bindtap="del" data-idx="{{item.idx}}">✕</view>

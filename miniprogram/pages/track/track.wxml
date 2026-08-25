@@ -1,0 +1,22 @@
+<view class="page" wx:if="{{rec}}">
+  <map id="trackmap" class="track-map" latitude="{{mapLat}}" longitude="{{mapLng}}"
+       scale="15" polyline="{{poly}}" enable-zoom enable-scroll></map>
+
+  <view class="card">
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">{{rec.emoji}} {{rec.name}}</view>
+      <view class="gap"></view>
+      <view class="hint">{{dateLabel}}</view>
+    </view>
+    <view class="track-meta">
+      <view class="live-m"><view class="live-mv">{{rec.distance}}</view><view class="live-ml">公里</view></view>
+      <view class="live-m"><view class="live-mv">{{rec.minutes}}</view><view class="live-ml">分钟</view></view>
+      <view class="live-m"><view class="live-mv">{{pace}}</view><view class="live-ml">配速/公里</view></view>
+      <view class="live-m"><view class="live-mv">{{rec.count || '--'}}</view><view class="live-ml">步数</view></view>
+      <view class="live-m"><view class="live-mv">−{{rec.kcal}}</view><view class="live-ml">千卡</view></view>
+    </view>
+    <view wx:if="{{rec.cadence}}" class="track-extra">平均步频 {{rec.cadence}} 步/分 · {{rec.intensity}}记录</view>
+  </view>
+
+  <button class="btn-danger" bindtap="del">🗑 删除记录</button>
+</view>

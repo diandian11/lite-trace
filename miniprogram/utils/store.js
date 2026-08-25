@@ -6,7 +6,8 @@ const K = {
   weight: 'lt_weight',
   sport: 'lt_sport',
   diet: 'lt_diet',
-  water: 'lt_water'
+  water: 'lt_water',
+  tracks: 'lt_tracks'
 }
 
 function fmtDate(d) {
@@ -120,6 +121,23 @@ function addWater(date, ml) {
   return m[date]
 }
 
+// ---------- GPS 轨迹（ts -> [points]，独立 key 避免列表读取冗余） ----------
+const TRACK_MAX = 30 // 最多保留 30 条轨迹，超出丢最旧
+function getTracks() { return get(K.tracks, {}) }
+function saveTrack(ts, points) {
+  const t = getTracks()
+  t[ts] = points
+  const keys = Object.keys(t).map(Number).sort(function (a, b) { return a - b })
+  while (keys.length > TRACK_MAX) { delete t[keys.shift()] }
+  set(K.tracks, t)
+}
+function getTrack(ts) { return getTracks()[ts] || [] }
+function removeTrack(ts) {
+  const t = getTracks()
+  delete t[ts]
+  set(K.tracks, t)
+}
+
 // ---------- 业务计算 ----------
 // BMR: Mifflin-St Jeor
 function bmr(profile, weightKg) {
@@ -196,6 +214,9 @@ module.exports = {
   latestWeight: latestWeight,
   waterOfDay: waterOfDay,
   addWater: addWater,
+  saveTrack: saveTrack,
+  getTrack: getTrack,
+  removeTrack: removeTrack,
   bmr: bmr,
   streak: streak,
   stats: stats,
