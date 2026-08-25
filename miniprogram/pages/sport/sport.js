@@ -401,7 +401,7 @@ Page({
     this.clearHold()
   },
   holdFinishHint() {
-    if (this.data.liveOn) wx.showToast({ title: '长按满 3 秒才能结束', icon: 'none' })
+    if (this.data.liveOn) wx.showToast({ title: '长按「停止保存」3秒生效', icon: 'none' })
   },
   clearHold() {
     if (this.holdTimer) { clearInterval(this.holdTimer); this.holdTimer = null }

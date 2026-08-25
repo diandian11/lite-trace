@@ -58,11 +58,15 @@
             <cover-view class="fm-dist">{{outDist}} km</cover-view>
             <cover-view class="fm-time">{{liveTime}} · {{outPace}}/km · 🧭{{heading}}</cover-view>
           </cover-view>
+          <cover-view wx:if="{{mapFull && holding}}" class="fm-progress">
+            <cover-view class="fm-progress-track"><cover-view class="fm-progress-fill" style="width:{{finishProgress}}%"></cover-view></cover-view>
+            <cover-view class="fm-progress-num">{{holdSecLeft}}s</cover-view>
+          </cover-view>
           <cover-view wx:if="{{mapFull}}" class="fm-bottom">
             <cover-view class="fm-btn fm-btn-ghost" catchtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</cover-view>
-            <cover-view class="fm-btn fm-btn-main" catchtouchstart="startHoldFinish" catchtouchend="cancelHoldFinish" catchtouchcancel="cancelHoldFinish" catchtap="holdFinishHint">
-              <cover-view class="fm-hold-fill" style="width:{{finishProgress}}%"></cover-view>
-              <cover-view class="fm-hold-text">{{holding ? '⏳ ' + holdSecLeft + 's' : '长按 3 秒结束'}}</cover-view>
+            <cover-view class="fm-btn fm-btn-main {{holding ? 'fm-holding' : ''}}" catchtouchstart="startHoldFinish" catchtouchend="cancelHoldFinish" catchtouchcancel="cancelHoldFinish" catchtap="holdFinishHint">
+              <cover-view class="fm-edge" style="width:{{finishProgress}}%"></cover-view>
+              <cover-view class="fm-hold-text">⏹ 停止保存</cover-view>
             </cover-view>
           </cover-view>
         </map>
@@ -92,10 +96,19 @@
     <view wx:if="{{liveOn}}" class="live-btns">
       <button class="btn-ghost" bindtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</button>
       <view class="gap"></view>
-      <view class="btn-main live-finish hold-btn" bindtouchstart="startHoldFinish" bindtouchend="cancelHoldFinish" bindtouchcancel="cancelHoldFinish" bindtap="holdFinishHint">
-        <view class="hold-fill" style="width:{{finishProgress}}%"></view>
-        <view class="hold-text">{{holding ? '⏳ 再按住 ' + holdSecLeft + ' 秒…' : '✓ 长按 3 秒结束'}}</view>
+      <view class="btn-main live-finish hold-btn {{holding ? 'holding' : ''}}" bindtouchstart="startHoldFinish" bindtouchend="cancelHoldFinish" bindtouchcancel="cancelHoldFinish" bindtap="holdFinishHint">
+        <view class="hold-edge" style="width:{{finishProgress}}%"></view>
+        <view class="hold-text">⏹ 停止保存</view>
       </view>
+    </view>
+    <view wx:if="{{liveOn}}" class="hold-hint">
+      <block wx:if="{{!holding}}">
+        <view class="hold-hint-text">长按「停止保存」3 秒生效，防误触</view>
+      </block>
+      <block wx:else>
+        <view class="hold-track"><view class="hold-track-fill" style="width:{{finishProgress}}%"></view></view>
+        <view class="hold-hint-num">{{holdSecLeft}}s</view>
+      </block>
     </view>
   </view>
 

@@ -142,16 +142,50 @@
   padding: 22rpx 52rpx;
   border-radius: 44rpx;
 }
-.fm-hold-fill {
+.fm-holding {
+  background: linear-gradient(135deg, #0EA371, #0B8F6B);
+}
+.fm-edge {
   position: absolute;
   left: 0;
-  top: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.35);
+  height: 6rpx;
+  background: rgba(255, 255, 255, 0.95);
 }
 .fm-hold-text {
   position: relative;
   z-index: 1;
+}
+
+/* 全屏地图：按钮上方的进度条+倒数 */
+.fm-progress {
+  position: absolute;
+  bottom: 170rpx;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.fm-progress-track {
+  width: 360rpx;
+  height: 10rpx;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+.fm-progress-fill {
+  height: 100%;
+  background: #ffffff;
+}
+.fm-progress-num {
+  margin-top: 10rpx;
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 700;
+  background: rgba(17, 24, 39, 0.7);
+  padding: 4rpx 22rpx;
+  border-radius: 20rpx;
   font-variant-numeric: tabular-nums;
 }
 .fm-btn-ghost {
@@ -224,7 +258,7 @@
 }
 .live-finish { margin-left: 20rpx !important; }
 
-/* 长按3秒结束按钮（进度条填充） */
+/* 长按停止保存：按钮保持简洁，进度体现在按钮底边细条 + 外部进度条 */
 .hold-btn {
   position: relative;
   overflow: hidden;
@@ -234,16 +268,52 @@
   height: 88rpx;
   box-sizing: border-box;
 }
-.hold-fill {
+.hold-btn.holding {
+  background: linear-gradient(135deg, #0EA371, #0B8F6B);
+}
+.hold-edge {
   position: absolute;
   left: 0;
-  top: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.35);
+  height: 6rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0 6rpx 6rpx 0;
 }
 .hold-text {
   position: relative;
   z-index: 1;
+}
+
+/* 按钮下方的提示/进度区 */
+.hold-hint {
+  margin-top: 16rpx;
+  min-height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+}
+.hold-hint-text {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+.hold-track {
+  width: 300rpx;
+  height: 10rpx;
+  background: #E5E7EB;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+.hold-track-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34D399, #10B981);
+  border-radius: 6rpx;
+}
+.hold-hint-num {
+  font-size: 24rpx;
+  color: #0D9488;
+  font-weight: 700;
+  min-width: 52rpx;
   font-variant-numeric: tabular-nums;
 }
 
