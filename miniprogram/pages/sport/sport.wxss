@@ -353,6 +353,12 @@
 }
 
 /* ---- 记录列表：日历视图 ---- */
+.drill-head {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
 .cal {
   margin-top: 4rpx;
 }

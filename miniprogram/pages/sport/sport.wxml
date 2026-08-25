@@ -147,10 +147,10 @@
   </view>
 
   <view class="card">
-    <view class="flex-row">
+    <!-- 日历态 -->
+    <block wx:if="{{!calDrill}}">
       <view class="card-title" style="margin-bottom:0;">🗓 运动记录</view>
-      <view class="gap"></view>
-      <!-- 日历视图：有运动的日子标千卡，点选看当日明细 -->
+      <!-- 日历视图：有运动的日子标千卡，点日期进入当日明细 -->
       <view class="cal">
         <view class="cal-head">
           <view class="date-btn" bindtap="prevMonth">‹</view>
@@ -167,18 +167,27 @@
           </view>
         </view>
       </view>
-    </view>
-    <view class="hint" style="margin-top:12rpx;">本月共耗 {{calMonthKcal}} 千卡 · {{viewDate === todayStr ? '今天' : viewDate}} 合计 {{totalMin}} 分钟 / {{totalKcal}} 千卡</view>
-    <view wx:if="{{records.length === 0}}" class="empty">{{viewDate === todayStr ? '今天还没运动，动起来 💪' : '这天没有运动记录'}}</view>
-    <view wx:for="{{records}}" wx:key="ts" class="item">
-      <view class="item-main" bindtap="openTrack" data-idx="{{item.idx}}">
-        <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟{{item.hasTrack ? ' 📍' : ''}}</view>
-        <view class="item-sub">
-          {{item.intensity}}{{item.distance ? ' · ' + item.distance + ' 公里' : ''}}{{item.count ? ' · ' + item.count + ' ' + (item.unit || '组') : ''}}{{item.hasTrack ? ' · 点看轨迹' : ''}}
-        </view>
+      <view class="hint" style="margin-top:12rpx;">本月共耗 {{calMonthKcal}} 千卡 · 点日期看明细</view>
+    </block>
+
+    <!-- 当日明细态：原地替换日历 -->
+    <block wx:else>
+      <view class="drill-head">
+        <view class="date-btn" bindtap="backToCal">‹</view>
+        <view class="cal-title">{{viewDate === todayStr ? '今天' : viewDate}} 的运动</view>
       </view>
-      <view class="item-kcal">−{{item.kcal}}</view>
-      <view class="item-del" bindtap="del" data-idx="{{item.idx}}">✕</view>
-    </view>
+      <view wx:if="{{records.length === 0}}" class="empty">{{viewDate === todayStr ? '今天还没运动，动起来 💪' : '这天没有运动记录'}}</view>
+      <view wx:for="{{records}}" wx:key="ts" class="item">
+        <view class="item-main" bindtap="openTrack" data-idx="{{item.idx}}">
+          <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟{{item.hasTrack ? ' 📍' : ''}}</view>
+          <view class="item-sub">
+            {{item.intensity}}{{item.distance ? ' · ' + item.distance + ' 公里' : ''}}{{item.count ? ' · ' + item.count + ' ' + (item.unit || '组') : ''}}{{item.hasTrack ? ' · 点看轨迹' : ''}}
+          </view>
+        </view>
+        <view class="item-kcal">−{{item.kcal}}</view>
+        <view class="item-del" bindtap="del" data-idx="{{item.idx}}">✕</view>
+      </view>
+      <view class="hint" wx:if="{{records.length > 0}}">合计 {{totalMin}} 分钟 / {{totalKcal}} 千卡</view>
+    </block>
   </view>
 </view>

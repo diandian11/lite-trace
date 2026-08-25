@@ -48,7 +48,8 @@ Page({
     timbres: [], timbre: 'tt', // 播报音色
     // 运动记录：日历视图 + 当日明细
     viewDate: '', todayStr: '',
-    calTitle: '', calCells: [], calMonthKcal: 0, calCanNext: false
+    calTitle: '', calCells: [], calMonthKcal: 0, calCanNext: false,
+    calDrill: false, // false=日历态，true=当日明细态（原地替换日历）
   },
 
   onLoad() {
@@ -147,13 +148,17 @@ Page({
     this.calM = d.getMonth()
     this.buildCal()
   },
-  // 点日期看当日明细（未来日期不可选）
+  // 点日期：原地切换到当日明细
   pickDay(e) {
     const ds = e.currentTarget.dataset.d
     if (!ds || ds > this.data.todayStr) return
-    this.setData({ viewDate: ds })
-    this.buildCal()
+    this.setData({ viewDate: ds, calDrill: true })
     this.refresh()
+  },
+  // 返回日历
+  backToCal() {
+    this.setData({ calDrill: false })
+    this.buildCal()
   },
 
   // ---------- 手动打卡 ----------
@@ -180,7 +185,7 @@ Page({
       intensity: it.name, kcal: kcal, ts: Date.now()
     })
     wx.showToast({ title: '已打卡 +' + kcal + ' 千卡', icon: 'success' })
-    this.setData({ minutes: '30', count: '', viewDate: store.today() })
+    this.setData({ minutes: '30', count: '', viewDate: store.today(), calDrill: false })
     this.buildCal()
     this.refresh()
   },
@@ -552,7 +557,7 @@ Page({
       wx.vibrateShort({ type: 'light' })
       voice.endIndoor(steps, kcal)
       wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
-      this.setData({ viewDate: store.today() })
+      this.setData({ viewDate: store.today(), calDrill: false })
     }
     this.buildCal()
     this.refresh()
