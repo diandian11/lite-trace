@@ -89,13 +89,41 @@ Page({
     this.setData({ liveTypeIndex: +e.currentTarget.dataset.i })
   },
 
-  bindAccel(self) {
+  // 监听器只注册一次，靠 liveOn/livePaused 门槛控制；避免重复 on 导致回调叠加
+  ensureAccelListener() {
+    if (this.accelBound) return
+    const self = this
     wx.onAccelerometerChange(function (res) {
       if (!self.data.liveOn || self.data.livePaused || !self.counter) return
       const steps = self.counter.feed(res.x, res.y, res.z, Date.now())
       if (steps > self.data.liveSteps) {
         self.stepTs.push(Date.now())
         self.setData({ liveSteps: steps })
+      }
+    })
+    this.accelBound = true
+  },
+
+  // Android 上传感器已开启时再 start 会报 "has enable, should stop pre operation"
+  // 统一走 先停(complete)再开 的顺序，无论之前状态如何都能启动
+  startAccelSafe() {
+    const self = this
+    wx.stopAccelerometer({
+      complete() {
+        wx.startAccelerometer({
+          interval: 'game',
+          fail(res) {
+            const msg = res && res.errMsg ? res.errMsg : JSON.stringify(res)
+            console.error('startAccelerometer fail:', res)
+            wx.showModal({
+              title: '传感器启动失败',
+              content: String(msg || '未知错误').slice(0, 120),
+              showCancel: false,
+              confirmText: '知道了'
+            })
+            self.teardownLive()
+          }
+        })
       }
     })
   },
@@ -110,22 +138,9 @@ Page({
       liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0
     })
     wx.vibrateShort({ type: 'light' })
+    this.ensureAccelListener()
+    this.startAccelSafe()
     const self = this
-    wx.startAccelerometer({
-      interval: 'game',
-      fail(res) {
-        const msg = (res && (res.errMsg || res.errMsg === '')) ? res.errMsg : JSON.stringify(res)
-        console.error('startAccelerometer fail:', res)
-        wx.showModal({
-          title: '传感器启动失败',
-          content: String(msg || '未知错误').slice(0, 120),
-          showCancel: false,
-          confirmText: '知道了'
-        })
-        self.teardownLive()
-      }
-    })
-    this.bindAccel(this)
     this.liveTimer = setInterval(function () {
       if (!self.data.livePaused) { self.liveSec++; self.tickLive() }
     }, 1000)
@@ -156,8 +171,8 @@ Page({
   resumeLive() {
     if (!this.data.liveOn || !this.data.livePaused) return
     this.setData({ livePaused: false })
-    wx.startAccelerometer({ interval: 'game' })
-    this.bindAccel(this)
+    this.ensureAccelListener()
+    this.startAccelSafe()
     const self = this
     this.liveTimer = setInterval(function () {
       if (!self.data.livePaused) { self.liveSec++; self.tickLive() }
@@ -172,7 +187,7 @@ Page({
   teardownLive() {
     if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = null }
     wx.stopAccelerometer()
-    wx.offAccelerometerChange()
+    if (this.accelBound) { wx.offAccelerometerChange(); this.accelBound = false }
     this.setData({ liveOn: false, livePaused: false })
   },
 
