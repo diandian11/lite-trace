@@ -47,10 +47,50 @@ function simplify(points, minM, maxPts) {
   return out
 }
 
+// 速度→颜色（慢红 → 快绿，5档）
+function speedColor(mps) {
+  if (mps == null) return '#10B981'
+  if (mps < 1.4) return '#EF4444'
+  if (mps < 1.8) return '#F59E0B'
+  if (mps < 2.2) return '#EAB308'
+  if (mps < 2.7) return '#84CC16'
+  return '#10B981'
+}
+
+// 轨迹速度热力线：按相邻点速度着色，同色段合并为一条 polyline；无时间戳的旧轨迹回退单色
+function heatPolylines(points, width) {
+  width = width || 4
+  if (!points || points.length < 2) return []
+  let hasT = true
+  for (let i = 0; i < points.length; i++) {
+    if (points[i].t == null) { hasT = false; break }
+  }
+  if (!hasT) return [{ points: points, color: '#10B981', width: width, arrowLine: true }]
+  const lines = []
+  let cur = null, curColor = null
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i]
+    const dt = (b.t - a.t) / 1000
+    const v = dt > 0 ? distM(a, b) / dt : 0
+    const c = speedColor(v)
+    if (!cur || c !== curColor) {
+      if (cur) lines.push(cur)
+      cur = { points: [a, b], color: c, width: width }
+      curColor = c
+    } else {
+      cur.points.push(b)
+    }
+  }
+  if (cur) lines.push(cur)
+  return lines
+}
+
 module.exports = {
   distM: distM,
   fmtKm: fmtKm,
   fmtPace: fmtPace,
   headingName: headingName,
-  simplify: simplify
+  simplify: simplify,
+  speedColor: speedColor,
+  heatPolylines: heatPolylines
 }

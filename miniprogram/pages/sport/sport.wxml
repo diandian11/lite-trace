@@ -54,6 +54,15 @@
             <cover-view class="fm-btn fm-btn-main" catchtap="finishLive">✓ 结束保存</cover-view>
           </cover-view>
         </map>
+        <view class="heat-legend" wx:if="{{!mapFull}}">
+          <text class="hl-label">慢</text>
+          <view class="hl-seg" style="background:#EF4444"></view>
+          <view class="hl-seg" style="background:#F59E0B"></view>
+          <view class="hl-seg" style="background:#EAB308"></view>
+          <view class="hl-seg" style="background:#84CC16"></view>
+          <view class="hl-seg" style="background:#10B981"></view>
+          <text class="hl-label">快</text>
+        </view>
         <view class="live-steps-wrap">
           <view class="live-steps">{{outDist}}</view>
           <view class="live-steps-unit">公里</view>

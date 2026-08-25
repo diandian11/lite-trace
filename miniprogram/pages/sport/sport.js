@@ -182,7 +182,7 @@ Page({
     wx.onLocationChange(function (res) {
       if (!self.data.liveOn || self.data.livePaused) return
       if (res.accuracy != null && res.accuracy > 50) return
-      const p = { latitude: +res.latitude.toFixed(6), longitude: +res.longitude.toFixed(6) }
+      const p = { latitude: +res.latitude.toFixed(6), longitude: +res.longitude.toFixed(6), t: Date.now() }
       if (!self.lastLoc) {
         self.lastLoc = p
         self.trackPts.push(p)
@@ -199,7 +199,7 @@ Page({
         self.lastMapSet = now
         self.setData({
           outDist: geo.fmtKm(self.trackM),
-          poly: [{ points: self.trackPts.slice(), color: '#10B981', width: 4, arrowLine: true }],
+          poly: geo.heatPolylines(self.trackPts, 4),
           mapLat: p.latitude, mapLng: p.longitude
         })
       }

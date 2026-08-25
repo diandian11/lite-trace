@@ -7,7 +7,16 @@
       <cover-view class="fm-time">{{rec.minutes}} 分钟 · {{pace}}/km{{rec.count ? ' · ' + rec.count + ' 步' : ''}}</cover-view>
     </cover-view>
   </map>
-  <view class="map-tip" wx:if="{{!mapFull}}">点击地图可全屏查看 🗺</view>
+  <view class="map-tip" wx:if="{{!mapFull}}">点击地图可全屏查看 🗺 · 轨迹颜色代表速度</view>
+  <view class="heat-legend" wx:if="{{!mapFull}}">
+    <text class="hl-label">慢</text>
+    <view class="hl-seg" style="background:#EF4444"></view>
+    <view class="hl-seg" style="background:#F59E0B"></view>
+    <view class="hl-seg" style="background:#EAB308"></view>
+    <view class="hl-seg" style="background:#84CC16"></view>
+    <view class="hl-seg" style="background:#10B981"></view>
+    <text class="hl-label">快</text>
+  </view>
 
   <view class="card">
     <view class="flex-row">

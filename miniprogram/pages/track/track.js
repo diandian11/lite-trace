@@ -30,7 +30,7 @@ Page({
       pace: geo.fmtPace(rec.minutes * 60, (rec.distance || 0) * 1000),
       mapLat: pts.length ? pts[0].latitude : 39.908,
       mapLng: pts.length ? pts[0].longitude : 116.397,
-      poly: pts.length ? [{ points: pts, color: '#10B981', width: 4, arrowLine: true }] : [],
+      poly: geo.heatPolylines(pts, 4),
       mapFull: false
     })
     // 视野自动适配整条轨迹

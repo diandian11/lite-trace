@@ -83,35 +83,43 @@
   border-radius: 0;
 }
 
-/* 全屏地图上的覆盖层（cover-view） */
+/* 全屏地图上的覆盖层（cover-view）：深色药丸底 + 高对比白字 */
 .fm-top {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  padding: 28rpx 24rpx 20rpx;
-  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0));
+  padding: 32rpx 24rpx 32rpx;
+  background: linear-gradient(rgba(17,24,39,0.82), rgba(17,24,39,0.45) 70%, rgba(0,0,0,0));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
 .fm-exit {
-  background: rgba(0,0,0,0.6);
+  background: rgba(17,24,39,0.88);
   color: #ffffff;
   font-size: 26rpx;
-  padding: 12rpx 28rpx;
+  font-weight: 600;
+  padding: 14rpx 30rpx;
   border-radius: 32rpx;
 }
 .fm-dist {
+  background: rgba(17,24,39,0.72);
   color: #ffffff;
-  font-size: 72rpx;
-  font-weight: 700;
-  margin-top: 16rpx;
+  font-size: 76rpx;
+  font-weight: 800;
+  margin-top: 20rpx;
+  padding: 8rpx 32rpx;
+  border-radius: 24rpx;
 }
 .fm-time {
-  color: rgba(255,255,255,0.9);
+  background: rgba(17,24,39,0.66);
+  color: #ffffff;
   font-size: 26rpx;
-  margin-top: 6rpx;
+  font-weight: 500;
+  margin-top: 14rpx;
+  padding: 8rpx 22rpx;
+  border-radius: 18rpx;
 }
 .fm-bottom {
   position: absolute;
@@ -124,16 +132,36 @@
 }
 .fm-btn {
   font-size: 30rpx;
-  padding: 20rpx 48rpx;
-  border-radius: 40rpx;
+  font-weight: 600;
+  padding: 22rpx 52rpx;
+  border-radius: 44rpx;
 }
 .fm-btn-ghost {
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.95);
   color: #0D9488;
 }
 .fm-btn-main {
   background: #10B981;
   color: #ffffff;
+}
+
+/* 速度热力图例 */
+.heat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  margin: 14rpx 0 0;
+}
+.hl-seg {
+  width: 44rpx;
+  height: 12rpx;
+  border-radius: 6rpx;
+}
+.hl-label {
+  font-size: 22rpx;
+  color: #6B7280;
+  margin: 0 10rpx;
 }
 
 .live-auto {
