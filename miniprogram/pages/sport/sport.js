@@ -3,18 +3,24 @@ const sport = require('../../utils/sport')
 const stepcounter = require('../../utils/stepcounter')
 const geo = require('../../utils/geo')
 
-// 类型不再让用户选：室内按步频、户外按配速自动识别
-function inAutoType(cadence) { return cadence >= 115 ? 'run' : 'walk' }
-function outAutoType(sec, meters, cadence) {
-  if (meters >= 30 && sec > 0) {
-    return (sec / 60) / (meters / 1000) <= 8 ? 'run' : 'walk'
-  }
-  if (cadence > 0) return inAutoType(cadence)
-  return 'walk'
+// 室内按步频自动识别
+function inAutoType(cadence) { return cadence >= 115 ? 'jog' : 'walk' }
+// 户外按近期速度(m/s)+步频自动识别：慢走/慢跑/快跑/骑行
+function classifyOutdoor(mps, cadence) {
+  // 骑行特征：速度≥2.5m/s 且几乎无步伐节律（手机感知不到蹬踏节奏）
+  if (mps != null && mps >= 2.5 && (!cadence || cadence < 40)) return 'ride'
+  if (mps == null || mps <= 0) return cadence >= 115 ? 'jog' : 'walk'
+  if (mps < 1.4) return 'walk'
+  if (mps < 2.8) return 'jog'
+  if (mps < 4.5) return 'run'
+  return cadence >= 70 ? 'run' : 'ride'
 }
+const OUT_KEYS = ['walk', 'jog', 'run', 'ride']
 const TYPE_INFO = {
-  walk: { key: 'walk', name: '快走', emoji: '🚶' },
-  run: { key: 'run', name: '慢跑', emoji: '🏃' }
+  walk: { key: 'walk', name: '慢走', emoji: '🚶' },
+  jog: { key: 'jog', name: '慢跑', emoji: '🏃' },
+  run: { key: 'run', name: '快跑', emoji: '💨' },
+  ride: { key: 'ride', name: '骑行', emoji: '🚴' }
 }
 
 function fmtTime(sec) {
@@ -31,10 +37,11 @@ Page({
     records: [], totalMin: 0, totalKcal: 0,
     // 实时记录（室内计步 / 户外GPS）
     liveMode: 'indoor',
-    liveOn: false, livePaused: false, autoLabel: '🚶 快走',
+    liveOn: false, livePaused: false, autoLabel: '✨ 自动',
     liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0,
     outDist: '0.00', outPace: '--\'--', heading: '--',
     mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false,
+    outTypeIndex: -1, // -1=自动识别，0慢走 1慢跑 2快跑 3骑行
     // 记录列表日期浏览
     viewDate: '', todayStr: ''
   },
@@ -49,6 +56,7 @@ Page({
     this.counter = null
     this.liveTimer = null
     this.stepTs = []
+    this.speedBuf = [] // 近期速度滑窗 [{t, m}]，供类型自动识别
     this.trackPts = []
     this.trackM = 0
     this.lastLoc = null
@@ -141,6 +149,11 @@ Page({
     if (this.data.liveOn) return
     this.setData({ liveMode: e.currentTarget.dataset.m })
   },
+  // 户外类型：-1 自动 / 0-3 手动锁定，运动中也可切换
+  setOutType(e) {
+    this.setData({ outTypeIndex: +e.currentTarget.dataset.i })
+    if (this.data.liveOn) this.tickLive()
+  },
   toggleMapFull() { this.setData({ mapFull: !this.data.mapFull }) },
 
   elapsedSec() {
@@ -194,6 +207,7 @@ Page({
       self.lastLoc = p
       self.trackPts.push(p)
       self.trackM += d
+      self.speedBuf.push({ t: Date.now(), m: self.trackM })
       const now = Date.now()
       if (now - self.lastMapSet > 2500) {
         self.lastMapSet = now
@@ -264,6 +278,7 @@ Page({
     this.stepTs = []
     this.trackPts = []
     this.trackM = 0
+    this.speedBuf = []
     this.lastLoc = null
     this.lastMapSet = 0
     this.lastHeading = -99
@@ -273,7 +288,7 @@ Page({
     this.setData({
       liveOn: true, livePaused: false,
       liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0,
-      autoLabel: '🚶 快走',
+      autoLabel: '✨ 自动',
       outDist: '0.00', outPace: '--\'--', heading: '--', poly: [], mapFull: false
     })
     wx.vibrateShort({ type: 'light' })
@@ -288,20 +303,33 @@ Page({
     this.tickLive()
   },
 
+  // 当前生效类型：手动锁定优先，否则按近期速度(20s滑窗)+步频自动识别
+  currentType(cadence) {
+    if (this.data.outTypeIndex >= 0) return OUT_KEYS[this.data.outTypeIndex]
+    const buf = this.speedBuf || []
+    const now = Date.now()
+    while (buf.length && now - buf[0].t > 20000) buf.shift()
+    let mps = null
+    if (buf.length >= 2) {
+      const dt = (buf[buf.length - 1].t - buf[0].t) / 1000
+      if (dt >= 5) mps = (buf[buf.length - 1].m - buf[0].m) / dt
+    }
+    return classifyOutdoor(mps, cadence)
+  },
+
   tickLive() {
     const sec = this.elapsedSec()
     const outdoor = this.data.liveMode === 'outdoor'
     const now = Date.now()
     while (this.stepTs.length && now - this.stepTs[0] > 12000) this.stepTs.shift()
     const cadence = this.stepTs.length >= 3 ? this.stepTs.length * 5 : 0
-    const typeKey = outdoor
-      ? outAutoType(sec, this.trackM, cadence)
-      : inAutoType(cadence)
+    const typeKey = outdoor ? this.currentType(cadence) : inAutoType(cadence)
     const t = TYPE_INFO[typeKey]
+    const auto = this.data.outTypeIndex < 0
     const patch = {
       liveTime: fmtTime(sec),
       liveCadence: cadence,
-      autoLabel: t.emoji + ' ' + t.name,
+      autoLabel: (outdoor && auto ? '✨ 自动·' : '') + t.emoji + ' ' + t.name,
       liveKcal: sport.kcal(t.key, sec / 60, this.weightKg(), 'mid')
     }
     if (outdoor) patch.outPace = geo.fmtPace(sec, this.trackM)
@@ -350,7 +378,7 @@ Page({
     const sec = this.elapsedSec()
     const steps = this.data.liveSteps
     const cadence = sec > 0 ? Math.round(steps / (sec / 60)) : 0
-    const typeKey = outdoor ? outAutoType(sec, this.trackM, cadence) : inAutoType(cadence)
+    const typeKey = outdoor ? this.currentType(cadence) : inAutoType(cadence)
     const t = TYPE_INFO[typeKey]
     this.teardownLive()
     if (outdoor) {

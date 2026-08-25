@@ -36,8 +36,17 @@
 
     <!-- 户外 -->
     <block wx:if="{{liveMode === 'outdoor'}}">
+      <view class="live-type-row">
+        <view class="live-type {{outTypeIndex === -1 ? 'on' : ''}}" bindtap="setOutType" data-i="-1">✨ 自动识别</view>
+      </view>
+      <view class="live-type-row">
+        <view class="live-type live-type-sm {{outTypeIndex === 0 ? 'on' : ''}}" bindtap="setOutType" data-i="0">🚶 慢走</view>
+        <view class="live-type live-type-sm {{outTypeIndex === 1 ? 'on' : ''}}" bindtap="setOutType" data-i="1">🏃 慢跑</view>
+        <view class="live-type live-type-sm {{outTypeIndex === 2 ? 'on' : ''}}" bindtap="setOutType" data-i="2">💨 快跑</view>
+        <view class="live-type live-type-sm {{outTypeIndex === 3 ? 'on' : ''}}" bindtap="setOutType" data-i="3">🚴 骑行</view>
+      </view>
       <view wx:if="{{!liveOn}}">
-        <view class="live-tip">记录 GPS 轨迹与距离，快走/慢跑按配速自动识别，锁屏揣兜里也继续记；结束后可地图回看轨迹</view>
+        <view class="live-tip">默认✨自动识别（按近期速度+步频判定），也可手动锁定类型（运动中可随时切换）；锁屏揣兜里继续记录</view>
         <button class="btn-main" bindtap="startLive">▶ 开始户外记录</button>
       </view>
       <view wx:if="{{liveOn}}">

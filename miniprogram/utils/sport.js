@@ -4,6 +4,7 @@
 const TYPES = [
   { key: 'run', name: '跑步', met: 9.0, emoji: '🏃' },
   { key: 'walk', name: '快走', met: 4.3, emoji: '🚶' },
+  { key: 'jog', name: '慢跑', met: 8.0, emoji: '🏃' },
   { key: 'rope', name: '跳绳', met: 11.0, emoji: '🪢' },
   { key: 'ride', name: '骑行', met: 7.5, emoji: '🚴' },
   { key: 'gym', name: '撸铁', met: 5.0, emoji: '🏋️' },

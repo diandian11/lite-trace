@@ -23,6 +23,10 @@
   border-color: #10B981;
   font-weight: 600;
 }
+.live-type-sm {
+  font-size: 24rpx;
+  padding: 16rpx 0;
+}
 .live-tip {
   font-size: 24rpx;
   color: #9CA3AF;
