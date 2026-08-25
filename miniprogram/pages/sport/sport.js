@@ -44,7 +44,7 @@ Page({
     mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false,
     outTypeIndex: -1, // -1=自动识别，0慢走 1慢跑 2快跑 3骑行
     finishProgress: 0, holding: false, holdSecLeft: '', // 长按结束进度
-    voiceOn: true, // 语音播报开关
+    voiceOn: true, voiceAvailable: false, // 语音播报（插件可用时才显示开关）
     // 记录列表日期浏览
     viewDate: '', todayStr: ''
   },
@@ -55,7 +55,8 @@ Page({
       intensityNames: sport.INTENSITY.map(i => i.name),
       viewDate: store.today(),
       todayStr: store.today(),
-      voiceOn: voice.enabled()
+      voiceOn: voice.available() && voice.enabled(),
+      voiceAvailable: voice.available()
     })
     this.counter = null
     this.liveTimer = null

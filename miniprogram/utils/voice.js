@@ -1,7 +1,9 @@
 // 轻迹 LiteTrace · 语音播报（微信同声传译插件 TTS）
 // 插件不可用/合成失败时静默降级，不影响运动记录
+// 注：个人主体小程序后台当前搜不到同声传译插件（类目限制），暂休眠。
+// 恢复步骤：① app.json 加回 plugins.WechatSI 声明 ② 取消下行 requirePlugin 注释
 let plugin = null
-try { plugin = requirePlugin('WechatSI') } catch (e) { plugin = null }
+// try { plugin = requirePlugin('WechatSI') } catch (e) { plugin = null }
 
 const KEY = 'lt_voice'
 const cache = {}      // 文本 -> 临时音频文件（静态短语复用，避免重复合成）
@@ -49,4 +51,4 @@ function speak(text) {
   })
 }
 
-module.exports = { speak: speak, enabled: enabled, setEnabled: setEnabled }
+module.exports = { speak: speak, enabled: enabled, setEnabled: setEnabled, available: function () { return !!plugin } }
