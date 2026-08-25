@@ -7,6 +7,10 @@
       <view class="gap"></view>
       <view class="hint">{{liveOn ? (livePaused ? '已暂停' : (liveMode === 'outdoor' ? 'GPS 记录中…' : '计步中…')) : (liveMode === 'outdoor' ? '户外 GPS' : '室内计步')}}</view>
     </view>
+    <view class="voice-row">
+      <text class="voice-label">🔊 语音播报</text>
+      <switch class="voice-sw" checked="{{voiceOn}}" bindchange="toggleVoice" color="#10B981" />
+    </view>
 
     <!-- 模式切换 -->
     <view class="live-type-row">

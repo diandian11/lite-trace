@@ -1,6 +1,22 @@
 /* 运动页：主要复用全局样式 */
 .item-kcal { color: var(--lt-accent); }
 
+/* 语音播报开关 */
+.voice-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 12rpx;
+}
+.voice-label {
+  font-size: 22rpx;
+  color: #6B7280;
+  margin-right: 8rpx;
+}
+.voice-sw {
+  transform: scale(0.7);
+}
+
 /* ---- 实时记录 ---- */
 .live-type-row {
   display: flex;

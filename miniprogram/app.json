@@ -14,6 +14,12 @@
   },
   "requiredPrivateInfos": ["getLocation", "onLocationChange", "startLocationUpdate"],
   "requiredBackgroundModes": ["location"],
+  "plugins": {
+    "WechatSI": {
+      "version": "0.3.5",
+      "provider": "wx069ba97219f66d99"
+    }
+  },
   "window": {
     "navigationBarBackgroundColor": "#10B981",
     "navigationBarTitleText": "轻迹 LiteTrace",
