@@ -1,0 +1,29 @@
+{
+  "pages": [
+    "pages/today/today",
+    "pages/sport/sport",
+    "pages/diet/diet",
+    "pages/weight/weight",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#10B981",
+    "navigationBarTitleText": "轻迹 LiteTrace",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F6F8F7"
+  },
+  "tabBar": {
+    "color": "#9CA3AF",
+    "selectedColor": "#10B981",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/today/today", "text": "今日" },
+      { "pagePath": "pages/sport/sport", "text": "运动" },
+      { "pagePath": "pages/diet/diet", "text": "饮食" },
+      { "pagePath": "pages/weight/weight", "text": "体重" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

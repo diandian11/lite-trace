@@ -1,0 +1,111 @@
+/* 轻迹 LiteTrace · 全局样式与主题 Token */
+page {
+  --lt-primary: #10B981;
+  --lt-primary-deep: #0D9488;
+  --lt-mint: #5EEAD4;
+  --lt-accent: #FB7185;
+  --lt-blue: #38BDF8;
+  --lt-bg: #F6F8F7;
+  --lt-ink: #1F2937;
+  --lt-ink2: #6B7280;
+  --lt-ink3: #9CA3AF;
+  background: var(--lt-bg);
+  color: var(--lt-ink);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* 卡片 */
+.card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 20rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(15, 118, 110, 0.06);
+}
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  margin-bottom: 20rpx;
+}
+
+/* 按钮 */
+.btn-main {
+  background: linear-gradient(135deg, #34D399, #10B981);
+  color: #fff;
+  border-radius: 18rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-top: 24rpx;
+}
+.btn-main::after { border: none; }
+.btn-ghost {
+  background: #ECFDF5;
+  color: var(--lt-primary);
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  padding: 14rpx 0;
+  text-align: center;
+}
+.btn-ghost::after { border: none; }
+.btn-danger {
+  background: #FFF1F2;
+  color: var(--lt-accent);
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  padding: 14rpx 0;
+  text-align: center;
+}
+.btn-danger::after { border: none; }
+
+/* 表单 */
+.form-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #F3F4F6;
+}
+.form-row:last-child { border-bottom: none; }
+.form-label {
+  width: 150rpx;
+  color: var(--lt-ink2);
+  font-size: 27rpx;
+  flex-shrink: 0;
+}
+.form-picker {
+  flex: 1;
+  color: var(--lt-ink);
+}
+.form-input {
+  flex: 1;
+  color: var(--lt-ink);
+}
+
+/* 列表项 */
+.item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F3F4F6;
+}
+.item:last-child { border-bottom: none; }
+.item-main { flex: 1; }
+.item-title { font-size: 28rpx; font-weight: 600; }
+.item-sub { font-size: 24rpx; color: var(--lt-ink3); margin-top: 4rpx; }
+.item-kcal { font-size: 28rpx; font-weight: 700; color: var(--lt-accent); margin-right: 20rpx; }
+.item-del { color: var(--lt-ink3); font-size: 26rpx; padding: 8rpx 4rpx 8rpx 20rpx; }
+
+/* 通用 */
+.hint { color: var(--lt-ink3); font-size: 24rpx; }
+.empty { text-align: center; color: var(--lt-ink3); font-size: 26rpx; padding: 40rpx 0; }
+.flex-row { display: flex; align-items: center; }
+.gap { flex: 1; }
+
+/* 统计列 */
+.row3 { display: flex; margin-top: 24rpx; }
+.m { flex: 1; text-align: center; }
+.mv { font-size: 34rpx; font-weight: 800; }
+.mv .unit { font-size: 22rpx; font-weight: 400; color: var(--lt-ink3); }
+.mv.accent { color: var(--lt-accent); }
+.mv.blue { color: var(--lt-blue); }
+.ml { font-size: 24rpx; color: var(--lt-ink3); margin-top: 4rpx; }

@@ -1,0 +1,4 @@
+{
+  "desc": "轻迹 LiteTrace 页面收录设置",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

@@ -1,0 +1,44 @@
+<view class="page">
+  <view class="card hero">
+    <view class="date">{{date}}</view>
+    <view class="hello">今天轻一点了吗？🔥 连续打卡 {{streak}} 天</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">今日能量收支</view>
+    <view class="bar"><view class="bar-fill" style="width:{{pct}}%"></view></view>
+    <view class="row3">
+      <view class="m"><view class="mv">{{intake}}</view><view class="ml">🍱 摄入(千卡)</view></view>
+      <view class="m"><view class="mv accent">+{{burnSport}}</view><view class="ml">🔥 运动消耗</view></view>
+      <view class="m"><view class="mv">{{bmr}}</view><view class="ml">⚡ 基础代谢</view></view>
+    </view>
+    <view class="hint" style="text-align:center;margin-top:16rpx;">今日额度 {{budget}} 千卡 · 已用 {{pct}}%</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">今日概览</view>
+    <view class="row3">
+      <view class="m" bindtap="goTab" data-url="/pages/sport/sport">
+        <view class="mv">🏃 {{sportMin}}<text class="unit">分钟</text></view><view class="ml">运动时长</view>
+      </view>
+      <view class="m" bindtap="goTab" data-url="/pages/diet/diet">
+        <view class="mv">🍱 {{dietCount}}<text class="unit">条</text></view><view class="ml">饮食记录</view>
+      </view>
+      <view class="m" bindtap="goTab" data-url="/pages/weight/weight">
+        <view class="mv">⚖️ {{weightKg || '--'}}</view><view class="ml">当前体重{{weightKg ? ' kg' : ''}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">💧 喝水打卡</view>
+      <view class="gap"></view>
+      <view class="water-num">{{water}} ml</view>
+    </view>
+    <view class="water-btns">
+      <button class="btn-ghost water-btn" bindtap="subWater">− 250ml</button>
+      <button class="btn-main water-btn main" bindtap="addWater">+ 250ml</button>
+    </view>
+  </view>
+</view>

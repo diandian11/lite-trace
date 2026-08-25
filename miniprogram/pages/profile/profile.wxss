@@ -1,0 +1,2 @@
+/* 我的页：主要复用全局样式 */
+.about { text-align: center; padding: 36rpx 28rpx; }

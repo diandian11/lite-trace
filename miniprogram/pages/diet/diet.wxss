@@ -1,0 +1,15 @@
+.meals { display: flex; gap: 14rpx; margin-bottom: 10rpx; }
+.meal-tag {
+  flex: 1; text-align: center; padding: 14rpx 0;
+  border-radius: 14rpx; background: #F3F4F6;
+  color: var(--lt-ink2); font-size: 26rpx;
+}
+.meal-tag.on { background: #ECFDF5; color: var(--lt-primary); font-weight: 700; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 14rpx; }
+.chip {
+  padding: 10rpx 22rpx; background: #F0FDFA;
+  border-radius: 999rpx; font-size: 24rpx; color: #0F766E;
+}
+
+.item-kcal.diet { color: var(--lt-primary); }

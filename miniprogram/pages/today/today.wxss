@@ -1,0 +1,15 @@
+.hero {
+  background: linear-gradient(135deg, #5EEAD4, #10B981);
+  color: #fff;
+  box-shadow: 0 10rpx 24rpx rgba(13, 148, 136, 0.25);
+}
+.hero .date { font-size: 24rpx; opacity: 0.85; }
+.hero .hello { font-size: 34rpx; font-weight: 700; margin-top: 8rpx; }
+
+.bar { height: 20rpx; background: #F3F4F6; border-radius: 10rpx; overflow: hidden; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, #5EEAD4, #10B981); border-radius: 10rpx; transition: width 0.3s; }
+
+.water-num { font-size: 34rpx; font-weight: 800; color: var(--lt-blue); }
+.water-btns { display: flex; gap: 20rpx; margin-top: 24rpx; }
+.water-btn { flex: 1; margin: 0; }
+.water-btn.main { margin: 0; padding: 14rpx 0; font-size: 28rpx; }

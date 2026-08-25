@@ -1,0 +1,2 @@
+/* 运动页：主要复用全局样式 */
+.item-kcal { color: var(--lt-accent); }

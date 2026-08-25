@@ -1,0 +1,41 @@
+<view class="page">
+  <view class="card">
+    <view class="card-title">🍱 记录饮食</view>
+    <view class="meals">
+      <view wx:for="{{meals}}" wx:key="key" class="meal-tag {{mealIndex === index ? 'on' : ''}}" bindtap="pickMeal" data-i="{{index}}">{{item.emoji}} {{item.name}}</view>
+    </view>
+    <view class="form-row">
+      <view class="form-label">食物</view>
+      <input class="form-input" value="{{name}}" bindinput="bindName" placeholder="吃了什么" />
+    </view>
+    <view class="form-row">
+      <view class="form-label">千卡</view>
+      <input class="form-input" type="digit" value="{{kcal}}" bindinput="bindKcal" placeholder="估算能量" />
+    </view>
+    <button class="btn-main" bindtap="save">记录 ✓</button>
+  </view>
+
+  <view class="card">
+    <view class="card-title">常见食物 · 点击快填</view>
+    <view class="chips">
+      <view wx:for="{{lib}}" wx:key="name" class="chip" bindtap="pickFood" data-i="{{index}}">{{item.name}} {{item.kcal}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">今日饮食</view>
+      <view class="gap"></view>
+      <view class="hint">合计 {{totalKcal}} 千卡</view>
+    </view>
+    <view wx:if="{{records.length === 0}}" class="empty">还没有记录，从早餐开始吧 🥗</view>
+    <view wx:for="{{records}}" wx:key="ts" class="item">
+      <view class="item-main">
+        <view class="item-title">{{item.emoji}} {{item.name}}</view>
+        <view class="item-sub">{{item.mealName}}</view>
+      </view>
+      <view class="item-kcal diet">+{{item.kcal}}</view>
+      <view class="item-del" bindtap="del" data-idx="{{item.idx}}">✕</view>
+    </view>
+  </view>
+</view>

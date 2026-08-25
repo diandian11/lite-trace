@@ -1,0 +1,2 @@
+/* 体重页：主要复用全局样式 */
+.item-kcal.normal { color: var(--lt-ink); font-weight: 600; }

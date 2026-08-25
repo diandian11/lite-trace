@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="card">
+    <view class="card-title">🏃 运动打卡</view>
+    <view class="form-row">
+      <view class="form-label">类型</view>
+      <picker class="form-picker" mode="selector" range="{{typeNames}}" value="{{typeIndex}}" bindchange="bindType">
+        <view>{{typeNames[typeIndex]}}</view>
+      </picker>
+    </view>
+    <view class="form-row">
+      <view class="form-label">时长(分钟)</view>
+      <input class="form-input" type="number" value="{{minutes}}" bindinput="bindMinutes" placeholder="如 30" />
+    </view>
+    <view class="form-row">
+      <view class="form-label">次数/组数</view>
+      <input class="form-input" type="number" value="{{count}}" bindinput="bindCount" placeholder="选填，如 4 组" />
+    </view>
+    <view class="form-row">
+      <view class="form-label">强度</view>
+      <picker class="form-picker" mode="selector" range="{{intensityNames}}" value="{{intensityIndex}}" bindchange="bindIntensity">
+        <view>{{intensityNames[intensityIndex]}}</view>
+      </picker>
+    </view>
+    <button class="btn-main" bindtap="save">打卡 ✓</button>
+  </view>
+
+  <view class="card">
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">今日运动</view>
+      <view class="gap"></view>
+      <view class="hint">合计 {{totalMin}} 分钟 · {{totalKcal}} 千卡</view>
+    </view>
+    <view wx:if="{{records.length === 0}}" class="empty">今天还没运动，动起来 💪</view>
+    <view wx:for="{{records}}" wx:key="ts" class="item">
+      <view class="item-main">
+        <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟</view>
+        <view class="item-sub">{{item.intensity}}{{item.count ? ' · ' + item.count + ' 组' : ''}}</view>
+      </view>
+      <view class="item-kcal">−{{item.kcal}}</view>
+      <view class="item-del" bindtap="del" data-idx="{{item.idx}}">✕</view>
+    </view>
+  </view>
+</view>
