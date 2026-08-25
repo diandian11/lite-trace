@@ -1,6 +1,51 @@
 <view class="page">
+
+  <!-- 实时计步 -->
   <view class="card">
-    <view class="card-title">🏃 运动打卡</view>
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">📡 实时计步</view>
+      <view class="gap"></view>
+      <view class="hint">{{liveOn ? (livePaused ? '已暂停' : '记录中…') : '前台计步'}}</view>
+    </view>
+
+    <view wx:if="{{!liveOn}}">
+      <view class="live-type-row">
+        <view class="live-type {{liveTypeIndex === 0 ? 'on' : ''}}" bindtap="setLiveType" data-i="0">🚶 快走</view>
+        <view class="live-type {{liveTypeIndex === 1 ? 'on' : ''}}" bindtap="setLiveType" data-i="1">🏃 慢跑</view>
+      </view>
+      <view class="live-tip">点开始后带着手机走即可（建议拿在手上或放口袋）；切出小程序会自动暂停，回来点继续</view>
+      <button class="btn-main" bindtap="startLive">▶ 开始记录</button>
+    </view>
+
+    <view wx:if="{{liveOn}}">
+      <view class="live-steps-wrap">
+        <view class="live-steps">{{liveSteps}}</view>
+        <view class="live-steps-unit">步</view>
+      </view>
+      <view class="live-meta">
+        <view class="live-m">
+          <view class="live-mv">{{liveTime}}</view>
+          <view class="live-ml">时长</view>
+        </view>
+        <view class="live-m">
+          <view class="live-mv">{{liveCadence}}</view>
+          <view class="live-ml">步频/分</view>
+        </view>
+        <view class="live-m">
+          <view class="live-mv">{{liveKcal}}</view>
+          <view class="live-ml">预估千卡</view>
+        </view>
+      </view>
+      <view class="live-btns">
+        <button class="btn-ghost" bindtap="togglePause">{{livePaused ? '▶ 继续' : '⏸ 暂停'}}</button>
+        <view class="gap"></view>
+        <button class="btn-main live-finish" bindtap="finishLive">✓ 结束并保存</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">🏃 手动打卡</view>
     <view class="form-row">
       <view class="form-label">类型</view>
       <picker class="form-picker" mode="selector" range="{{typeNames}}" value="{{typeIndex}}" bindchange="bindType">
@@ -34,7 +79,7 @@
     <view wx:for="{{records}}" wx:key="ts" class="item">
       <view class="item-main">
         <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟</view>
-        <view class="item-sub">{{item.intensity}}{{item.count ? ' · ' + item.count + ' 组' : ''}}</view>
+        <view class="item-sub">{{item.intensity}}{{item.count ? ' · ' + item.count + ' ' + (item.unit || '组') : ''}}</view>
       </view>
       <view class="item-kcal">−{{item.kcal}}</view>
       <view class="item-del" bindtap="del" data-idx="{{item.idx}}">✕</view>
