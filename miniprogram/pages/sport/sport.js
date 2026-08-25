@@ -156,7 +156,7 @@ Page({
   toggleVoice(e) {
     voice.setEnabled(e.detail.value)
     this.setData({ voiceOn: e.detail.value })
-    if (e.detail.value) voice.speak('语音播报已开启')
+    if (e.detail.value) voice.event('voiceon')
   },
 
   // ---------- 实时记录 ----------
@@ -309,7 +309,7 @@ Page({
       outDist: '0.00', outPace: '--\'--', heading: '--', poly: [], mapFull: false
     })
     wx.vibrateShort({ type: 'light' })
-    voice.speak(outdoor ? '加油！户外运动开始，轻迹为你记录每一步！' : '加油！运动开始，轻迹为你记录每一步！')
+    voice.event('start')
     this.ensureAccelListener()
     this.startAccelSafe()
     if (outdoor) {
@@ -356,17 +356,15 @@ Page({
       const km = Math.floor(this.trackM / 1000)
       if (km > this.lastKm) {
         this.lastKm = km
-        const pm = Math.floor(sec / 60), ps = sec % 60
         const pk = this.trackM > 0 ? sec / this.trackM * 1000 : 0
-        const pkm = Math.floor(pk / 60), pks = Math.round(pk % 60)
-        voice.speak('已运动' + km + '公里，用时' + pm + '分' + ps + '秒，平均配速每公里' + pkm + '分' + pks + '秒，继续保持！')
+        voice.km(km, sec, pk)
       }
     } else {
       // 室内：每满1000步播报
       const mark = Math.floor(this.data.liveSteps / 1000)
       if (mark > this.lastStepMark) {
         this.lastStepMark = mark
-        voice.speak('已走' + mark * 1000 + '步，用时' + Math.floor(sec / 60) + '分钟，继续加油！')
+        voice.steps(mark * 1000, sec)
       }
     }
     this.setData(patch)
@@ -381,7 +379,7 @@ Page({
     this.setData({ livePaused: true })
     if (!silent) {
       wx.showToast({ title: '已暂停', icon: 'none' })
-      voice.speak('运动已暂停')
+      voice.event('pause')
     }
   },
 
@@ -389,7 +387,7 @@ Page({
     if (!this.data.liveOn || !this.data.livePaused) return
     this.lastResumeTs = Date.now()
     this.setData({ livePaused: false })
-    voice.speak('继续加油！')
+    voice.event('resume')
     this.ensureAccelListener()
     this.startAccelSafe()
     if (this.data.liveMode === 'outdoor') {
@@ -475,7 +473,7 @@ Page({
       store.pushOfDay(store.K.sport, store.today(), rec)
       store.saveTrack(ts, geo.simplify(this.trackPts, 8, 800))
       wx.vibrateShort({ type: 'light' })
-      voice.speak('太棒了！本次运动' + geo.fmtKm(this.trackM).replace('.', '点') + '公里，共' + minutes + '分钟，消耗' + kcal + '千卡！')
+      voice.endOutdoor(+geo.fmtKm(this.trackM), kcal)
       wx.showToast({
         title: '已保存 ' + geo.fmtKm(this.trackM) + ' 公里 +' + kcal + ' 千卡',
         icon: 'success'
@@ -495,7 +493,7 @@ Page({
         kcal: kcal, ts: Date.now()
       })
       wx.vibrateShort({ type: 'light' })
-      voice.speak('太棒了！本次共' + steps + '步，消耗' + kcal + '千卡！')
+      voice.endIndoor(steps, kcal)
       wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
       this.setData({ viewDate: store.today() })
     }
