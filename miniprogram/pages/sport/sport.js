@@ -34,13 +34,17 @@ Page({
     liveOn: false, livePaused: false, autoLabel: '🚶 快走',
     liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0,
     outDist: '0.00', outPace: '--\'--', heading: '--',
-    mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false
+    mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false,
+    // 记录列表日期浏览
+    viewDate: '', todayStr: ''
   },
 
   onLoad() {
     this.setData({
       typeNames: sport.TYPES.map(t => t.emoji + ' ' + t.name),
-      intensityNames: sport.INTENSITY.map(i => i.name)
+      intensityNames: sport.INTENSITY.map(i => i.name),
+      viewDate: store.today(),
+      todayStr: store.today()
     })
     this.counter = null
     this.liveTimer = null
@@ -60,12 +64,33 @@ Page({
   onUnload() { this.teardownLive() },
 
   refresh() {
-    const rs = store.sportOfDay(store.today())
+    const day = this.data.viewDate || store.today()
+    // hasTrack 由轨迹库实时推导（兼容旧记录，修复📍永不显示的bug）
+    const rs = store.sportOfDay(day).map(function (r) {
+      r.hasTrack = (store.getTrack(r.ts) || []).length > 0
+      return r
+    })
     this.setData({
+      viewDate: day,
       records: rs,
       totalMin: rs.reduce((s, x) => s + (+x.minutes || 0), 0),
       totalKcal: rs.reduce((s, x) => s + (+x.kcal || 0), 0)
     })
+  },
+
+  // ---------- 记录列表日期浏览 ----------
+  prevDay() {
+    const d = new Date(this.data.viewDate.replace(/-/g, '/') + ' 00:00:00')
+    d.setDate(d.getDate() - 1)
+    this.setData({ viewDate: store.fmtDate(d) })
+    this.refresh()
+  },
+  nextDay() {
+    if (this.data.viewDate >= this.data.todayStr) return
+    const d = new Date(this.data.viewDate.replace(/-/g, '/') + ' 00:00:00')
+    d.setDate(d.getDate() + 1)
+    this.setData({ viewDate: store.fmtDate(d) })
+    this.refresh()
   },
 
   // ---------- 手动打卡 ----------
@@ -92,14 +117,14 @@ Page({
       intensity: it.name, kcal: kcal, ts: Date.now()
     })
     wx.showToast({ title: '已打卡 +' + kcal + ' 千卡', icon: 'success' })
-    this.setData({ minutes: '30', count: '' })
+    this.setData({ minutes: '30', count: '', viewDate: store.today() })
     this.refresh()
   },
   del(e) {
     const idx = +e.currentTarget.dataset.idx
     const rec = this.data.records[idx]
     if (rec && rec.hasTrack) store.removeTrack(rec.ts)
-    store.removeOfDay(store.K.sport, store.today(), idx)
+    store.removeOfDay(store.K.sport, this.data.viewDate, idx)
     this.refresh()
   },
   openTrack(e) {
@@ -107,7 +132,7 @@ Page({
     const rec = this.data.records[idx]
     if (!rec || !rec.hasTrack) return
     wx.navigateTo({
-      url: '/pages/track/track?day=' + store.today() + '&ts=' + rec.ts
+      url: '/pages/track/track?day=' + this.data.viewDate + '&ts=' + rec.ts
     })
   },
 
@@ -353,6 +378,7 @@ Page({
         title: '已保存 ' + geo.fmtKm(this.trackM) + ' 公里 +' + kcal + ' 千卡',
         icon: 'success'
       })
+      this.setData({ viewDate: store.today() })
     } else {
       if (steps < 5 || sec < 30) {
         wx.showToast({ title: '步数太少，本次未保存', icon: 'none' })
@@ -368,6 +394,7 @@ Page({
       })
       wx.vibrateShort({ type: 'light' })
       wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
+      this.setData({ viewDate: store.today() })
     }
     this.refresh()
   }

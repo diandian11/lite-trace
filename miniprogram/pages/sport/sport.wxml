@@ -102,11 +102,16 @@
 
   <view class="card">
     <view class="flex-row">
-      <view class="card-title" style="margin-bottom:0;">今日运动</view>
+      <view class="card-title" style="margin-bottom:0;">🗓 运动记录</view>
       <view class="gap"></view>
-      <view class="hint">合计 {{totalMin}} 分钟 · {{totalKcal}} 千卡</view>
+      <view class="date-nav">
+        <view class="date-btn" bindtap="prevDay">‹</view>
+        <view class="date-label">{{viewDate === todayStr ? '今天' : viewDate}}</view>
+        <view class="date-btn {{viewDate >= todayStr ? 'off' : ''}}" bindtap="nextDay">›</view>
+      </view>
     </view>
-    <view wx:if="{{records.length === 0}}" class="empty">今天还没运动，动起来 💪</view>
+    <view class="hint" style="margin-top:12rpx;">合计 {{totalMin}} 分钟 · {{totalKcal}} 千卡</view>
+    <view wx:if="{{records.length === 0}}" class="empty">{{viewDate === todayStr ? '今天还没运动，动起来 💪' : '这天没有运动记录'}}</view>
     <view wx:for="{{records}}" wx:key="ts" class="item">
       <view class="item-main" bindtap="openTrack" data-idx="{{item.idx}}">
         <view class="item-title">{{item.emoji}} {{item.name}} · {{item.minutes}} 分钟{{item.hasTrack ? ' 📍' : ''}}</view>
