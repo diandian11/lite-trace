@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 微信开发者工具
+miniprogram/project.private.config.json
+
+# 日志与临时
+*.log
+tmp/
+node_modules/
