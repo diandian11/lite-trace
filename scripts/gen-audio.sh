@@ -11,12 +11,12 @@ NAMES=(ling yi er san si wu liu qi ba jiu \
   shi ershi sanshi sishi wushi liushi qishi bashi jiushi \
   bai qian wan \
   di gongli yongshi fen miao peisu xiaohao qianka gong bu yizou dian \
-  start pause resume end voiceon)
+  start pause resume end voiceon goaldone)
 TEXTS=(零 一 二 三 四 五 六 七 八 九 \
   十 二十 三十 四十 五十 六十 七十 八十 九十 \
   百 千 万 \
   第 公里 用时 分 秒 配速 消耗约 千卡 共 步 已走 点 \
-  "运动开始，加油" 已暂停 继续 "运动结束" 语音播报已开启)
+  "运动开始，加油" 已暂停 继续 "运动结束" 语音播报已开启 "恭喜，目标达成！")
 
 gen_pack() { # $1=目录 $2=语音 $3=语速
   local dir="$1" v="$2" rate="$3"

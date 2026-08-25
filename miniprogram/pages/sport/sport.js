@@ -24,6 +24,27 @@ const TYPE_INFO = {
   ride: { key: 'ride', name: '骑行', emoji: '🚴' }
 }
 
+// 运动目标选项（按模式，none=不设目标）
+const GOALS = {
+  outdoor: [
+    { t: 'none', label: '✨ 无目标' },
+    { t: 'dist', label: '1 km', v: 1000 },
+    { t: 'dist', label: '3 km', v: 3000 },
+    { t: 'dist', label: '5 km', v: 5000 },
+    { t: 'dist', label: '10 km', v: 10000 },
+    { t: 'time', label: '30 分钟', v: 1800 },
+    { t: 'time', label: '60 分钟', v: 3600 }
+  ],
+  indoor: [
+    { t: 'none', label: '✨ 无目标' },
+    { t: 'steps', label: '1000 步', v: 1000 },
+    { t: 'steps', label: '3000 步', v: 3000 },
+    { t: 'steps', label: '6000 步', v: 6000 },
+    { t: 'time', label: '20 分钟', v: 1200 },
+    { t: 'time', label: '40 分钟', v: 2400 }
+  ]
+}
+
 function fmtTime(sec) {
   const m = Math.floor(sec / 60)
   const s = sec % 60
@@ -44,6 +65,11 @@ Page({
     mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false,
     outTypeIndex: -1, // -1=自动识别，0慢走 1慢跑 2快跑 3骑行
     finishProgress: 0, holding: false, holdSecLeft: '', // 长按结束进度
+    // 运动目标
+    goals: [], goalIdx: 0,
+    goalHas: false, goalPct: 0, goalDeg: 0, goalText: '', goalDone: false,
+    // 周小结
+    weekBars: [], weekTotalMin: 0, weekActiveDays: 0, weekTotalKcal: 0, weekPct: 0, weekShow: false,
     voiceOn: true, voiceAvailable: false, // 语音播报（本地语音包，始终可用）
     timbres: [], timbre: 'tt', // 播报音色
     // 运动记录：日历视图 + 当日明细
@@ -61,7 +87,8 @@ Page({
       voiceOn: voice.available() && voice.enabled(),
       voiceAvailable: voice.available(),
       timbres: voice.TIMBRES,
-      timbre: voice.getTimbre()
+      timbre: voice.getTimbre(),
+      goals: GOALS[this.data.liveMode]
     })
     const n0 = new Date()
     this.calY = n0.getFullYear()
@@ -79,7 +106,10 @@ Page({
     this.lastKm = 0      // 已播报的整公里数
     this.lastStepMark = 0 // 室内已播报的整千步数
   },
-  onShow() { this.refresh() },
+  onShow() {
+    this.checkSnapshot()
+    this.refresh()
+  },
   onHide() {
     this.clearHold()
     if (this.data.liveOn && !this.data.livePaused && this.data.liveMode === 'indoor') {
@@ -101,6 +131,7 @@ Page({
       totalMin: rs.reduce((s, x) => s + (+x.minutes || 0), 0),
       totalKcal: rs.reduce((s, x) => s + (+x.kcal || 0), 0)
     })
+    this.buildWeek()
   },
 
   // ---------- 日历视图 ----------
@@ -159,6 +190,79 @@ Page({
   backToCal() {
     this.setData({ calDrill: false })
     this.buildCal()
+  },
+
+  // ---------- 周小结（WHO 建议150分钟/周） ----------
+  buildWeek() {
+    const w = store.weekStat(this.data.todayStr)
+    let maxMin = 0
+    for (let i = 0; i < w.days.length; i++) maxMin = Math.max(maxMin, w.days[i].min)
+    const names = ['一', '二', '三', '四', '五', '六', '日']
+    const bars = w.days.map(function (d, i) {
+      return {
+        id: 'w' + i,
+        name: names[i],
+        h: maxMin > 0 ? Math.max(4, Math.round(d.min / maxMin * 100)) : 4,
+        min: d.min,
+        today: d.date === store.today()
+      }
+    })
+    this.setData({
+      weekBars: bars,
+      weekTotalMin: w.totalMin,
+      weekActiveDays: w.activeDays,
+      weekTotalKcal: w.totalKcal,
+      weekPct: Math.min(100, Math.round(w.totalMin / 150 * 100))
+    })
+  },
+  toggleWeekShow() { this.setData({ weekShow: !this.data.weekShow }) },
+
+  // ---------- 崩溃恢复：未正常结束的运动按快照补录 ----------
+  checkSnapshot() {
+    if (this.data.liveOn) return
+    const s = store.getSnapshot()
+    if (!s || !s.sec || s.sec < 30) { if (s) store.clearSnapshot(); return }
+    const d = new Date(s.startTs)
+    const when = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+    const what = s.m === 'outdoor'
+      ? '户外记录了 ' + geo.fmtKm(s.distM || 0) + ' 公里 / ' + Math.max(1, Math.round(s.sec / 60)) + ' 分钟'
+      : '室内记录了 ' + (s.steps || 0) + ' 步 / ' + Math.max(1, Math.round(s.sec / 60)) + ' 分钟'
+    const self = this
+    wx.showModal({
+      title: '上次运动未正常结束',
+      content: when + ' 的' + what + '。补录保存吗？',
+      confirmText: '补录',
+      cancelText: '丢弃',
+      success(res) {
+        if (res.confirm) self.recoverLive(s)
+        store.clearSnapshot()
+        self.buildCal()
+        self.refresh()
+      }
+    })
+  },
+  // 按快照补录一条记录（含轨迹）
+  recoverLive(s) {
+    const outdoor = s.m === 'outdoor'
+    if (outdoor && (s.distM || 0) < 50) return
+    if (!outdoor && (s.steps || 0) < 5) return
+    const t = TYPE_INFO[s.typeKey] || TYPE_INFO.walk
+    const minutes = Math.max(1, Math.round(s.sec / 60))
+    const day = store.fmtDate(new Date(s.startTs))
+    const rec = {
+      typeKey: t.key, name: t.name + (outdoor ? '(户外)' : ''), emoji: t.emoji,
+      minutes: minutes, intensity: '补录', source: 'recover',
+      kcal: sport.kcal(t.key, minutes, this.weightKg(), 'mid'), ts: s.startTs
+    }
+    if (outdoor) {
+      rec.distance = +geo.fmtKm(s.distM)
+      if (s.pts && s.pts.length) store.saveTrack(s.startTs, s.pts)
+    } else {
+      rec.count = s.steps
+      rec.unit = '步'
+    }
+    store.pushOfDay(store.K.sport, day, rec)
+    wx.showToast({ title: '已补录 ' + minutes + ' 分钟', icon: 'success' })
   },
 
   // ---------- 手动打卡 ----------
@@ -224,7 +328,13 @@ Page({
   // ---------- 实时记录 ----------
   setLiveMode(e) {
     if (this.data.liveOn) return
-    this.setData({ liveMode: e.currentTarget.dataset.m })
+    const m = e.currentTarget.dataset.m
+    this.setData({ liveMode: m, goalIdx: 0, goals: GOALS[m] })
+  },
+  // 选目标（仅运动前）
+  setGoal(e) {
+    if (this.data.liveOn) return
+    this.setData({ goalIdx: +e.currentTarget.dataset.i })
   },
   // 户外类型：-1 自动 / 0-3 手动锁定，运动中也可切换
   setOutType(e) {
@@ -364,11 +474,17 @@ Page({
     this.liveStartTs = Date.now()
     this.pausedMs = 0
     this.lastResumeTs = Date.now()
+    this.goal = GOALS[this.data.liveMode][this.data.goalIdx] || GOALS[this.data.liveMode][0]
+    this.goalDone = false
+    this.lastTypeKey = 'walk'
+    const g = this.goal
+    const gTxt = g.t === 'none' ? '' : (g.t === 'dist' ? '0.00/' + (g.v / 1000).toFixed(1) + ' km' : g.t === 'time' ? '00:00/' + fmtTime(g.v) : '0/' + g.v + ' 步')
     this.setData({
       liveOn: true, livePaused: false,
       liveSteps: 0, liveTime: '00:00', liveCadence: 0, liveKcal: 0,
       autoLabel: '✨ 自动',
-      outDist: '0.00', outPace: '--\'--', heading: '--', poly: [], mapFull: false
+      outDist: '0.00', outPace: '--\'--', heading: '--', poly: [], mapFull: false,
+      goalHas: g.t !== 'none', goalPct: 0, goalDeg: 0, goalDone: false, goalText: gTxt
     })
     wx.vibrateShort({ type: 'light' })
     voice.event('start')
@@ -405,6 +521,7 @@ Page({
     const cadence = this.stepTs.length >= 3 ? this.stepTs.length * 5 : 0
     const typeKey = outdoor ? this.currentType(cadence) : inAutoType(cadence)
     const t = TYPE_INFO[typeKey]
+    this.lastTypeKey = typeKey
     const auto = this.data.outTypeIndex < 0
     const patch = {
       liveTime: fmtTime(sec),
@@ -420,6 +537,7 @@ Page({
         this.lastKm = km
         const pk = this.trackM > 0 ? sec / this.trackM * 1000 : 0
         voice.km(km, sec, pk)
+        this.saveSnapNow(sec, typeKey)
       }
     } else {
       // 室内：每满1000步播报
@@ -427,9 +545,49 @@ Page({
       if (mark > this.lastStepMark) {
         this.lastStepMark = mark
         voice.steps(mark * 1000, sec)
+        this.saveSnapNow(sec, typeKey)
+      }
+    }
+    // 目标进度与达成
+    if (this.goal && this.goal.t !== 'none') {
+      let cur = 0
+      let txt = ''
+      if (this.goal.t === 'dist') {
+        cur = this.trackM
+        txt = geo.fmtKm(cur) + '/' + (this.goal.v / 1000).toFixed(1) + ' km'
+      } else if (this.goal.t === 'time') {
+        cur = sec
+        txt = fmtTime(cur) + '/' + fmtTime(this.goal.v)
+      } else {
+        cur = this.data.liveSteps
+        txt = cur + '/' + this.goal.v + ' 步'
+      }
+      const pct = this.goal.v > 0 ? Math.min(100, Math.round(cur / this.goal.v * 100)) : 0
+      patch.goalPct = pct
+      patch.goalDeg = Math.round(pct * 3.6)
+      patch.goalText = txt
+      if (pct >= 100 && !this.goalDone) {
+        this.goalDone = true
+        patch.goalDone = true
+        wx.vibrateShort({ type: 'medium' })
+        voice.event('goaldone')
       }
     }
     this.setData(patch)
+  },
+
+  // 静默快照（崩溃恢复）：每满1公里/1000步及暂停时写入
+  saveSnapNow(sec, typeKey) {
+    if (!this.data.liveOn) return
+    store.saveSnapshot({
+      m: this.data.liveMode,
+      startTs: this.liveStartTs,
+      sec: sec,
+      steps: this.data.liveSteps,
+      distM: Math.round(this.trackM),
+      typeKey: typeKey || this.lastTypeKey || 'walk',
+      pts: this.data.liveMode === 'outdoor' ? geo.simplify(this.trackPts, 8, 800) : []
+    })
   },
 
   pauseLive(silent) {
@@ -438,6 +596,7 @@ Page({
     if (this.liveTimer) { clearInterval(this.liveTimer); this.liveTimer = null }
     this.stopAccel()
     if (this.data.liveMode === 'outdoor') this.stopLoc()
+    this.saveSnapNow(this.elapsedSec(), this.lastTypeKey)
     this.setData({ livePaused: true })
     if (!silent) {
       wx.showToast({ title: '已暂停', icon: 'none' })
@@ -471,7 +630,7 @@ Page({
     this.stopAccel()
     this.stopLoc()
     this.stopCompass()
-    this.setData({ liveOn: false, livePaused: false, mapFull: false })
+    this.setData({ liveOn: false, livePaused: false, mapFull: false, goalHas: false })
   },
 
   // ---------- 长按3秒结束（防误触，带进度条） ----------
@@ -514,6 +673,7 @@ Page({
     const typeKey = outdoor ? this.currentType(cadence) : inAutoType(cadence)
     const t = TYPE_INFO[typeKey]
     this.teardownLive()
+    store.clearSnapshot() // 正常结束，清除崩溃恢复快照
     if (outdoor) {
       if (this.trackM < 50 || sec < 60) {
         wx.showToast({ title: '距离或时长太短，本次未保存', icon: 'none' })

@@ -352,6 +352,155 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- 运动目标 ---- */
+.goal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin: 16rpx 0 4rpx;
+}
+.goal-chip {
+  font-size: 22rpx;
+  color: #6B7280;
+  background: #F1F5F9;
+  border: 1rpx solid #E2E8F0;
+  border-radius: 999rpx;
+  padding: 8rpx 22rpx;
+}
+.goal-chip.on {
+  color: #fff;
+  background: #10B981;
+  border-color: #10B981;
+  font-weight: 600;
+}
+.goal-live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  margin: 20rpx 0 4rpx;
+}
+.goal-ring {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.goal-ring.done {
+  background: #10B981 !important;
+}
+.goal-ring-in {
+  width: 86rpx;
+  height: 86rpx;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  color: #374151;
+  font-weight: 700;
+}
+.goal-ring-in.done {
+  background: #D1FAE5;
+  color: #059669;
+  font-size: 40rpx;
+}
+.goal-live-text {
+  text-align: left;
+}
+.goal-live-t1 {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #1F2937;
+}
+.goal-live-t2 {
+  font-size: 22rpx;
+  color: #6B7280;
+  margin-top: 4rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 周小结 ---- */
+.week-card {
+  background: #F8FAFC;
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  margin: 16rpx 0 4rpx;
+}
+.week-sum {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+.week-sum-main {
+  font-size: 24rpx;
+  color: #1F2937;
+  font-weight: 600;
+}
+.week-progress {
+  flex: 1;
+  min-width: 100rpx;
+  height: 10rpx;
+  background: #E5E7EB;
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.week-progress-fill {
+  height: 100%;
+  background: #10B981;
+  border-radius: 999rpx;
+}
+.week-sum-sub {
+  font-size: 22rpx;
+  color: #6B7280;
+}
+.week-chart {
+  display: flex;
+  margin-top: 16rpx;
+}
+.wk-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wk-min {
+  font-size: 18rpx;
+  color: #6B7280;
+  height: 26rpx;
+  line-height: 26rpx;
+}
+.wk-track {
+  height: 140rpx;
+  width: 28rpx;
+  background: #EEF2F7;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.wk-fill {
+  width: 100%;
+  background: #94A3B8;
+  border-radius: 8rpx;
+}
+.wk-fill.today {
+  background: #10B981;
+}
+.wk-name {
+  font-size: 20rpx;
+  color: #9CA3AF;
+  margin-top: 6rpx;
+}
+.wk-name.today {
+  color: #10B981;
+  font-weight: 700;
+}
+
 /* ---- 记录列表：日历视图 ---- */
 .drill-head {
   display: flex;

@@ -7,7 +7,8 @@ const K = {
   sport: 'lt_sport',
   diet: 'lt_diet',
   water: 'lt_water',
-  tracks: 'lt_tracks'
+  tracks: 'lt_tracks',
+  snapshot: 'lt_live_snapshot'
 }
 
 function fmtDate(d) {
@@ -91,6 +92,38 @@ function sportMonth(year, month) {
     out[d] = { n: rs.length, kcal: Math.round(kcal) }
   })
   return out
+}
+
+// ---------- 实时运动快照（崩溃恢复）：每满1公里/1000步静默写入 ----------
+function saveSnapshot(s) { set(K.snapshot, s) }
+function getSnapshot() { return get(K.snapshot, null) }
+function clearSnapshot() {
+  try { wx.removeStorageSync(K.snapshot) } catch (e) { }
+}
+
+// ---------- 周统计（周一为一周起点）：每天分钟/千卡 + 合计 ----------
+function weekStat(dateStr) {
+  const m = dayMap(K.sport)
+  const d = new Date(dateStr.replace(/-/g, '/') + ' 00:00:00')
+  const dow = (d.getDay() + 6) % 7 // 周一=0
+  d.setDate(d.getDate() - dow)
+  const days = []
+  let totalMin = 0, totalKcal = 0, activeDays = 0
+  for (let i = 0; i < 7; i++) {
+    const ds = fmtDate(d)
+    const rs = m[ds] || []
+    let min = 0, kcal = 0
+    for (let j = 0; j < rs.length; j++) {
+      min += (+rs[j].minutes || 0)
+      kcal += (+rs[j].kcal || 0)
+    }
+    if (min > 0 || kcal > 0) activeDays++
+    totalMin += min
+    totalKcal += kcal
+    days.push({ date: ds, min: min, kcal: Math.round(kcal) })
+    d.setDate(d.getDate() + 1)
+  }
+  return { days: days, totalMin: totalMin, totalKcal: Math.round(totalKcal), activeDays: activeDays }
 }
 
 // ---------- 饮食 ----------
@@ -223,6 +256,10 @@ module.exports = {
   removeOfDay: removeOfDay,
   sportOfDay: sportOfDay,
   sportMonth: sportMonth,
+  saveSnapshot: saveSnapshot,
+  getSnapshot: getSnapshot,
+  clearSnapshot: clearSnapshot,
+  weekStat: weekStat,
   dietOfDay: dietOfDay,
   intakeKcal: intakeKcal,
   getWeight: getWeight,

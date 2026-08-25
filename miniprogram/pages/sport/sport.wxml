@@ -26,11 +26,23 @@
     <!-- 室内 -->
     <block wx:if="{{liveMode === 'indoor'}}">
       <view wx:if="{{!liveOn}}">
+        <view class="goal-row">
+          <view class="goal-chip {{goalIdx === index ? 'on' : ''}}" wx:for="{{goals}}" wx:key="index" bindtap="setGoal" data-i="{{index}}">{{item.label}}</view>
+        </view>
         <view class="live-tip">点开始后带着手机走即可，快走/慢跑自动识别；切出小程序会自动暂停，回来点继续</view>
         <button class="btn-main" bindtap="startLive">▶ 开始记录</button>
       </view>
       <view wx:if="{{liveOn}}">
         <view class="live-auto">{{autoLabel}}</view>
+        <view class="goal-live" wx:if="{{goalHas}}">
+          <view class="goal-ring {{goalDone ? 'done' : ''}}" style="background:conic-gradient(#10B981 {{goalDeg}}deg,#E5E7EB 0deg)">
+            <view class="goal-ring-in {{goalDone ? 'done' : ''}}">{{goalDone ? '🎉' : goalPct + '%'}}</view>
+          </view>
+          <view class="goal-live-text">
+            <view class="goal-live-t1">{{goalDone ? '目标达成！' : '目标进度'}}</view>
+            <view class="goal-live-t2">{{goalText}}</view>
+          </view>
+        </view>
         <view class="live-steps-wrap">
           <view class="live-steps">{{liveSteps}}</view>
           <view class="live-steps-unit">步</view>
@@ -55,11 +67,23 @@
         <view class="live-type live-type-sm {{outTypeIndex === 3 ? 'on' : ''}}" bindtap="setOutType" data-i="3">🚴 骑行</view>
       </view>
       <view wx:if="{{!liveOn}}">
+        <view class="goal-row">
+          <view class="goal-chip {{goalIdx === index ? 'on' : ''}}" wx:for="{{goals}}" wx:key="index" bindtap="setGoal" data-i="{{index}}">{{item.label}}</view>
+        </view>
         <view class="live-tip">默认✨自动识别（按近期速度+步频判定），也可手动锁定类型（运动中可随时切换）；锁屏揣兜里继续记录</view>
         <button class="btn-main" bindtap="startLive">▶ 开始户外记录</button>
       </view>
       <view wx:if="{{liveOn}}">
         <view class="live-auto">{{autoLabel}} · 点击地图可全屏</view>
+        <view class="goal-live" wx:if="{{goalHas}}">
+          <view class="goal-ring {{goalDone ? 'done' : ''}}" style="background:conic-gradient(#10B981 {{goalDeg}}deg,#E5E7EB 0deg)">
+            <view class="goal-ring-in {{goalDone ? 'done' : ''}}">{{goalDone ? '🎉' : goalPct + '%'}}</view>
+          </view>
+          <view class="goal-live-text">
+            <view class="goal-live-t1">{{goalDone ? '目标达成！' : '目标进度'}}</view>
+            <view class="goal-live-t2">{{goalText}}</view>
+          </view>
+        </view>
         <map class="live-map {{mapFull ? 'map-full' : ''}}" latitude="{{mapLat}}" longitude="{{mapLng}}" scale="16"
              polyline="{{poly}}" show-location enable-zoom enable-scroll bindtap="toggleMapFull">
           <cover-view wx:if="{{mapFull}}" class="fm-top">
@@ -150,6 +174,21 @@
     <!-- 日历态 -->
     <block wx:if="{{!calDrill}}">
       <view class="card-title" style="margin-bottom:0;">🗓 运动记录</view>
+      <!-- 周小结：WHO 建议150分钟/周，点开看每日柱状图 -->
+      <view class="week-card" bindtap="toggleWeekShow">
+        <view class="week-sum">
+          <text class="week-sum-main">本周 {{weekTotalMin}}/150 分钟</text>
+          <view class="week-progress"><view class="week-progress-fill" style="width:{{weekPct}}%"></view></view>
+          <text class="week-sum-sub">运动 {{weekActiveDays}} 天 · {{weekTotalKcal}} 千卡 {{weekShow ? '▴' : '▾'}}</text>
+        </view>
+        <view class="week-chart" wx:if="{{weekShow}}">
+          <view class="wk-col" wx:for="{{weekBars}}" wx:key="id">
+            <view class="wk-min">{{item.min > 0 ? item.min : ''}}</view>
+            <view class="wk-track"><view class="wk-fill {{item.today ? 'today' : ''}}" style="height:{{item.h}}%"></view></view>
+            <view class="wk-name {{item.today ? 'today' : ''}}">{{item.name}}</view>
+          </view>
+        </view>
+      </view>
       <!-- 日历视图：有运动的日子标千卡，点日期进入当日明细 -->
       <view class="cal">
         <view class="cal-head">
