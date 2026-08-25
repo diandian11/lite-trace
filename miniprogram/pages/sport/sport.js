@@ -113,8 +113,15 @@ Page({
     const self = this
     wx.startAccelerometer({
       interval: 'game',
-      fail() {
-        wx.showToast({ title: '无法访问加速度计', icon: 'none' })
+      fail(res) {
+        const msg = (res && (res.errMsg || res.errMsg === '')) ? res.errMsg : JSON.stringify(res)
+        console.error('startAccelerometer fail:', res)
+        wx.showModal({
+          title: '传感器启动失败',
+          content: String(msg || '未知错误').slice(0, 120),
+          showCancel: false,
+          confirmText: '知道了'
+        })
         self.teardownLive()
       }
     })
