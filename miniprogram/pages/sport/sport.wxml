@@ -150,13 +150,25 @@
     <view class="flex-row">
       <view class="card-title" style="margin-bottom:0;">🗓 运动记录</view>
       <view class="gap"></view>
-      <view class="date-nav">
-        <view class="date-btn" bindtap="prevDay">‹</view>
-        <view class="date-label">{{viewDate === todayStr ? '今天' : viewDate}}</view>
-        <view class="date-btn {{viewDate >= todayStr ? 'off' : ''}}" bindtap="nextDay">›</view>
+      <!-- 日历视图：有运动的日子标千卡，点选看当日明细 -->
+      <view class="cal">
+        <view class="cal-head">
+          <view class="date-btn" bindtap="prevMonth">‹</view>
+          <view class="cal-title">{{calTitle}}</view>
+          <view class="date-btn {{calCanNext ? '' : 'off'}}" bindtap="nextMonth">›</view>
+        </view>
+        <view class="cal-grid">
+          <view class="cal-wk" wx:for="{{['一','二','三','四','五','六','日']}}" wx:key="*this">{{item}}</view>
+          <view wx:for="{{calCells}}" wx:for-item="c" wx:key="id"
+            class="cal-cell {{c.date ? '' : 'blank'}} {{c.sel ? 'sel' : ''}} {{c.future ? 'future' : ''}}"
+            bindtap="pickDay" data-d="{{c.date}}">
+            <view class="cal-day {{c.isToday ? 'today' : ''}}">{{c.day}}</view>
+            <view class="cal-kcal" wx:if="{{c.kcal > 0}}">{{c.kcal}}</view>
+          </view>
+        </view>
       </view>
     </view>
-    <view class="hint" style="margin-top:12rpx;">合计 {{totalMin}} 分钟 · {{totalKcal}} 千卡</view>
+    <view class="hint" style="margin-top:12rpx;">本月共耗 {{calMonthKcal}} 千卡 · {{viewDate === todayStr ? '今天' : viewDate}} 合计 {{totalMin}} 分钟 / {{totalKcal}} 千卡</view>
     <view wx:if="{{records.length === 0}}" class="empty">{{viewDate === todayStr ? '今天还没运动，动起来 💪' : '这天没有运动记录'}}</view>
     <view wx:for="{{records}}" wx:key="ts" class="item">
       <view class="item-main" bindtap="openTrack" data-idx="{{item.idx}}">

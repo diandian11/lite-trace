@@ -77,6 +77,22 @@ function removeOfDay(key, date, idx) {
 // ---------- 运动 ----------
 function sportOfDay(date) { return listOfDay(K.sport, date) }
 
+// 某月每天运动汇总（日历标记用）：{ '2026-08-01': { n: 条数, kcal: 千卡 } }
+function sportMonth(year, month) {
+  const pre = year + '-' + String(month).padStart(2, '0') + '-'
+  const m = dayMap(K.sport)
+  const out = {}
+  Object.keys(m).forEach(function (d) {
+    if (d.indexOf(pre) !== 0) return
+    const rs = m[d]
+    if (!rs || !rs.length) return
+    let kcal = 0
+    for (let i = 0; i < rs.length; i++) kcal += (+rs[i].kcal || 0)
+    out[d] = { n: rs.length, kcal: Math.round(kcal) }
+  })
+  return out
+}
+
 // ---------- 饮食 ----------
 function dietOfDay(date) { return listOfDay(K.diet, date) }
 
@@ -206,6 +222,7 @@ module.exports = {
   pushOfDay: pushOfDay,
   removeOfDay: removeOfDay,
   sportOfDay: sportOfDay,
+  sportMonth: sportMonth,
   dietOfDay: dietOfDay,
   intakeKcal: intakeKcal,
   getWeight: getWeight,

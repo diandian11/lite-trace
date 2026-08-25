@@ -352,11 +352,67 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- 记录列表日期导航 ---- */
-.date-nav {
+/* ---- 记录列表：日历视图 ---- */
+.cal {
+  margin-top: 4rpx;
+}
+.cal-head {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  justify-content: center;
+  gap: 24rpx;
+}
+.cal-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+  min-width: 200rpx;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10rpx;
+}
+.cal-wk {
+  width: 14.28%;
+  text-align: center;
+  font-size: 22rpx;
+  color: #9CA3AF;
+  padding: 8rpx 0;
+}
+.cal-cell {
+  width: 14.28%;
+  height: 84rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+}
+.cal-cell.sel {
+  background: #D1FAE5;
+}
+.cal-cell.future .cal-day {
+  color: #D1D5DB;
+}
+.cal-day {
+  font-size: 26rpx;
+  color: #374151;
+  line-height: 1.2;
+}
+.cal-day.today {
+  color: #10B981;
+  font-weight: 700;
+}
+.cal-kcal {
+  font-size: 16rpx;
+  color: #10B981;
+  margin-top: 2rpx;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 .date-btn {
   width: 52rpx;

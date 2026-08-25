@@ -46,8 +46,9 @@ Page({
     finishProgress: 0, holding: false, holdSecLeft: '', // 长按结束进度
     voiceOn: true, voiceAvailable: false, // 语音播报（本地语音包，始终可用）
     timbres: [], timbre: 'tt', // 播报音色
-    // 记录列表日期浏览
-    viewDate: '', todayStr: ''
+    // 运动记录：日历视图 + 当日明细
+    viewDate: '', todayStr: '',
+    calTitle: '', calCells: [], calMonthKcal: 0, calCanNext: false
   },
 
   onLoad() {
@@ -61,6 +62,10 @@ Page({
       timbres: voice.TIMBRES,
       timbre: voice.getTimbre()
     })
+    const n0 = new Date()
+    this.calY = n0.getFullYear()
+    this.calM = n0.getMonth()
+    this.buildCal()
     this.counter = null
     this.liveTimer = null
     this.stepTs = []
@@ -97,18 +102,57 @@ Page({
     })
   },
 
-  // ---------- 记录列表日期浏览 ----------
-  prevDay() {
-    const d = new Date(this.data.viewDate.replace(/-/g, '/') + ' 00:00:00')
-    d.setDate(d.getDate() - 1)
-    this.setData({ viewDate: store.fmtDate(d) })
-    this.refresh()
+  // ---------- 日历视图 ----------
+  // 构建 y 年 m 月(0-11)月历：周一开头，有运动的日子标千卡，选中日高亮
+  buildCal() {
+    const y = this.calY, m = this.calM
+    const tStr = this.data.todayStr
+    const sel = this.data.viewDate
+    const monthSum = store.sportMonth(y, m + 1)
+    let mk = 0
+    Object.keys(monthSum).forEach(function (d) { mk += monthSum[d].kcal })
+    const lead = (new Date(y, m, 1).getDay() + 6) % 7 // 周一=0
+    const dim = new Date(y, m + 1, 0).getDate()
+    const cells = []
+    for (let i = 0; i < lead; i++) cells.push({ id: 'b' + i, day: '', date: '' })
+    for (let d = 1; d <= dim; d++) {
+      const ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0')
+      const s = monthSum[ds]
+      cells.push({
+        id: 'd' + d, day: d, date: ds,
+        kcal: s ? s.kcal : 0,
+        isToday: ds === tStr,
+        sel: ds === sel,
+        future: ds > tStr
+      })
+    }
+    const now = new Date()
+    this.setData({
+      calTitle: y + '年' + (m + 1) + '月',
+      calCells: cells,
+      calMonthKcal: mk,
+      calCanNext: !(y === now.getFullYear() && m === now.getMonth())
+    })
   },
-  nextDay() {
-    if (this.data.viewDate >= this.data.todayStr) return
-    const d = new Date(this.data.viewDate.replace(/-/g, '/') + ' 00:00:00')
-    d.setDate(d.getDate() + 1)
-    this.setData({ viewDate: store.fmtDate(d) })
+  prevMonth() {
+    const d = new Date(this.calY, this.calM - 1, 1)
+    this.calY = d.getFullYear()
+    this.calM = d.getMonth()
+    this.buildCal()
+  },
+  nextMonth() {
+    if (!this.data.calCanNext) return
+    const d = new Date(this.calY, this.calM + 1, 1)
+    this.calY = d.getFullYear()
+    this.calM = d.getMonth()
+    this.buildCal()
+  },
+  // 点日期看当日明细（未来日期不可选）
+  pickDay(e) {
+    const ds = e.currentTarget.dataset.d
+    if (!ds || ds > this.data.todayStr) return
+    this.setData({ viewDate: ds })
+    this.buildCal()
     this.refresh()
   },
 
@@ -137,6 +181,7 @@ Page({
     })
     wx.showToast({ title: '已打卡 +' + kcal + ' 千卡', icon: 'success' })
     this.setData({ minutes: '30', count: '', viewDate: store.today() })
+    this.buildCal()
     this.refresh()
   },
   del(e) {
@@ -144,6 +189,7 @@ Page({
     const rec = this.data.records[idx]
     if (rec && rec.hasTrack) store.removeTrack(rec.ts)
     store.removeOfDay(store.K.sport, this.data.viewDate, idx)
+    this.buildCal()
     this.refresh()
   },
   openTrack(e) {
@@ -508,6 +554,7 @@ Page({
       wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
       this.setData({ viewDate: store.today() })
     }
+    this.buildCal()
     this.refresh()
   }
 })
