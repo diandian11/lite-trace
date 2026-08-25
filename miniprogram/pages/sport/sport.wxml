@@ -8,6 +8,11 @@
       <view class="hint">{{liveOn ? (livePaused ? '已暂停' : (liveMode === 'outdoor' ? 'GPS 记录中…' : '计步中…')) : (liveMode === 'outdoor' ? '户外 GPS' : '室内计步')}}</view>
     </view>
     <view class="voice-row" wx:if="{{voiceAvailable}}">
+      <view class="timbre-chips">
+        <view wx:for="{{timbres}}" wx:key="id"
+          class="timbre-chip {{timbre === item.id ? 'on' : ''}}"
+          data-id="{{item.id}}" bindtap="setTimbreTap">{{item.name}}</view>
+      </view>
       <text class="voice-label">🔊 语音播报</text>
       <switch class="voice-sw" checked="{{voiceOn}}" bindchange="toggleVoice" color="#10B981" />
     </view>

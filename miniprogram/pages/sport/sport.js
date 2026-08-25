@@ -44,7 +44,8 @@ Page({
     mapLat: 39.908, mapLng: 116.397, poly: [], mapFull: false,
     outTypeIndex: -1, // -1=自动识别，0慢走 1慢跑 2快跑 3骑行
     finishProgress: 0, holding: false, holdSecLeft: '', // 长按结束进度
-    voiceOn: true, voiceAvailable: false, // 语音播报（插件可用时才显示开关）
+    voiceOn: true, voiceAvailable: false, // 语音播报（本地语音包，始终可用）
+    timbres: [], timbre: 'tt', // 播报音色
     // 记录列表日期浏览
     viewDate: '', todayStr: ''
   },
@@ -56,7 +57,9 @@ Page({
       viewDate: store.today(),
       todayStr: store.today(),
       voiceOn: voice.available() && voice.enabled(),
-      voiceAvailable: voice.available()
+      voiceAvailable: voice.available(),
+      timbres: voice.TIMBRES,
+      timbre: voice.getTimbre()
     })
     this.counter = null
     this.liveTimer = null
@@ -157,6 +160,14 @@ Page({
     voice.setEnabled(e.detail.value)
     this.setData({ voiceOn: e.detail.value })
     if (e.detail.value) voice.event('voiceon')
+  },
+  // 切换音色并立即试听
+  setTimbreTap(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id || id === this.data.timbre) return
+    voice.setTimbre(id)
+    this.setData({ timbre: id })
+    voice.event('voiceon')
   },
 
   // ---------- 实时记录 ----------

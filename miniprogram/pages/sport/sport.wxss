@@ -13,6 +13,25 @@
   color: #6B7280;
   margin-right: 8rpx;
 }
+.timbre-chips {
+  display: flex;
+  align-items: center;
+}
+.timbre-chip {
+  font-size: 20rpx;
+  color: #6B7280;
+  background: #F1F5F9;
+  border: 1rpx solid #E2E8F0;
+  border-radius: 999rpx;
+  padding: 4rpx 18rpx;
+  margin-right: 10rpx;
+}
+.timbre-chip.on {
+  color: #fff;
+  background: #10B981;
+  border-color: #10B981;
+  font-weight: 600;
+}
 .voice-sw {
   transform: scale(0.7);
 }
