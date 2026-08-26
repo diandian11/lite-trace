@@ -48,31 +48,49 @@ Page({
   toggleMapFull() { this.setData({ mapFull: !this.data.mapFull }) },
 
   // ---------- 海报 ----------
+  // 流程：先趁地图可见时截好图，再开弹层直接画地图版；任何一步失败都回退示意版并提示
   makePoster() {
-    this.setData({ posterShow: true })
     const self = this
-    // 第一步：先立即画风格化兑底版，保证一定有内容
-    setTimeout(function () { self.renderPoster('') }, 150)
-    // 第二步：有轨迹且地图可用时，尝试截真实地图升级
-    if (this.pts && this.pts.length >= 2 && !this.data.mapFull) {
-      setTimeout(function () { self.upgradeWithMap() }, 800)
+    const hasTrack = this.pts && this.pts.length >= 2 && !this.data.mapFull
+    if (!hasTrack) {
+      this.setData({ posterShow: true })
+      setTimeout(function () { self.renderPoster('') }, 150)
+      return
     }
-  },
-
-  // 截图升级：任一步失败都保留兑底版，不抛异常
-  upgradeWithMap() {
-    const self = this
+    wx.showLoading({ title: '正在生成', mask: true })
+    let settled = false
+    const openStyled = function () {
+      if (settled) return
+      settled = true
+      wx.hideLoading()
+      self.setData({ posterShow: true })
+      setTimeout(function () { self.renderPoster('') }, 150)
+      wx.showToast({ title: '已生成·轨迹示意版', icon: 'none' })
+    }
+    const openMapped = function (path) {
+      if (settled) return
+      settled = true
+      wx.hideLoading()
+      self.setData({ posterShow: true })
+      setTimeout(function () { self.renderPoster(path) }, 150)
+    }
     try {
       const mctx = wx.createMapContext('trackmap')
       mctx.includePoints({ points: this.pts, padding: [60, 60, 60, 60] })
-      if (typeof mctx.snapshot !== 'function') return
-      mctx.snapshot({
-        success: function (r) {
-          if (r && r.tempImagePath && self.data.posterShow) self.renderPoster(r.tempImagePath)
-        },
-        fail: function () { }
-      })
-    } catch (e) { /* 保留兑底版 */ }
+      setTimeout(function () {
+        try {
+          if (typeof mctx.snapshot !== 'function') return openStyled()
+          mctx.snapshot({
+            success: function (r) {
+              (r && r.tempImagePath) ? openMapped(r.tempImagePath) : openStyled()
+            },
+            fail: openStyled
+          })
+        } catch (e) { openStyled() }
+      }, 900)
+      // 总兑底：2.6秒还没结果直接走示意版，防卡 loading
+      setTimeout(openStyled, 2600)
+    } catch (e) { openStyled() }
   },
 
   renderPoster(mapPath) {
