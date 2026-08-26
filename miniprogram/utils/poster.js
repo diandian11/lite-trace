@@ -72,7 +72,8 @@ function drawTrack(ctx, fitted) {
 }
 
 // 主入口：data = { date, name, distance, minutes, pace, kcal, steps, points }
-function drawPoster(canvas, dpr, data) {
+// mapImg: 可选，地图截图 Image 对象（MapContext.snapshot + canvas.createImage 加载）
+function drawPoster(canvas, dpr, data, mapImg) {
   const W = 690, H = 1000
   canvas.width = W * dpr
   canvas.height = H * dpr
@@ -128,16 +129,40 @@ function drawPoster(canvas, dpr, data) {
   if (data.steps) bits.push(data.steps + ' 步')
   ctx.fillText(bits.join('  ·  '), 48, 274)
 
-  // 轨迹卡
+  // 轨迹卡：优先真实地图截图打底，夜色蒙层压暗融入主题；否则半透明卡
   const boxX = 24, boxY = 318, boxW = W - 48, boxH = 470
-  roundRect(ctx, boxX, boxY, boxW, boxH, 28)
-  ctx.fillStyle = 'rgba(255,255,255,0.06)'
-  ctx.fill()
   const fitted = fitPoints(data.points, boxX, boxY, boxW, boxH, 42)
+  if (mapImg && mapImg.width) {
+    ctx.save()
+    roundRect(ctx, boxX, boxY, boxW, boxH, 28)
+    ctx.clip()
+    // cover 裁剪铺满
+    const iw = mapImg.width, ih = mapImg.height
+    const sc = Math.max(boxW / iw, boxH / ih)
+    const dw = iw * sc, dh = ih * sc
+    ctx.drawImage(mapImg, boxX + (boxW - dw) / 2, boxY + (boxH - dh) / 2, dw, dh)
+    // 夜色渐变蒙层：上浅下深，保轨迹可读又压住地图杂色
+    const dim = ctx.createLinearGradient(0, boxY, 0, boxY + boxH)
+    dim.addColorStop(0, 'rgba(4,33,28,0.45)')
+    dim.addColorStop(0.5, 'rgba(4,33,28,0.32)')
+    dim.addColorStop(1, 'rgba(4,33,28,0.55)')
+    ctx.fillStyle = dim
+    ctx.fillRect(boxX, boxY, boxW, boxH)
+    ctx.restore()
+    // 细描边卡框
+    roundRect(ctx, boxX, boxY, boxW, boxH, 28)
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'
+    ctx.lineWidth = 2
+    ctx.stroke()
+  } else {
+    roundRect(ctx, boxX, boxY, boxW, boxH, 28)
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'
+    ctx.fill()
+  }
   if (fitted) {
     drawTrack(ctx, fitted)
-  } else {
-    // 无轨迹兜底：居中提示
+  } else if (!mapImg) {
+    // 无地图无轨迹兜底：居中提示
     ctx.textAlign = 'center'
     ctx.fillStyle = 'rgba(255,255,255,0.4)'
     ctx.font = '28px sans-serif'

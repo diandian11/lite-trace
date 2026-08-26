@@ -51,11 +51,22 @@ Page({
   makePoster() {
     this.setData({ posterShow: true })
     const self = this
-    // 等弹层渲染完成后再取 canvas 节点
-    setTimeout(function () { self.renderPoster() }, 150)
+    // 有轨迹：先把地图视野缩回整条轨迹，再截图做海报底图；失败则纯风格化兑底
+    if (this.pts && this.pts.length >= 2 && !this.data.mapFull) {
+      const mctx = wx.createMapContext('trackmap')
+      mctx.includePoints({ points: this.pts, padding: [60, 60, 60, 60] })
+      setTimeout(function () {
+        mctx.snapshot({
+          success: function (r) { self.renderPoster(r.tempImagePath) },
+          fail: function () { self.renderPoster('') }
+        })
+      }, 600)
+    } else {
+      setTimeout(function () { self.renderPoster('') }, 150)
+    }
   },
 
-  renderPoster() {
+  renderPoster(mapPath) {
     const self = this
     const query = wx.createSelectorQuery().in(this)
     query.select('#posterCanvas').fields({ node: true, size: true }).exec(function (res) {
@@ -63,7 +74,7 @@ Page({
       const canvas = res[0].node
       const dpr = (wx.getWindowInfo ? wx.getWindowInfo() : { pixelRatio: 2 }).pixelRatio || 2
       const rec = self.data.rec
-      poster.drawPoster(canvas, dpr, {
+      const data = {
         date: self.data.day,
         name: rec.emoji + ' ' + rec.name,
         distance: rec.distance,
@@ -72,14 +83,25 @@ Page({
         kcal: rec.kcal,
         steps: rec.count,
         points: self.pts
-      })
-      self.posterCanvas = canvas
-      // 预生成临时文件，供转发卡片当缩略图
-      wx.canvasToTempFilePath({
-        canvas: canvas,
-        success: function (r) { self.posterTemp = r.tempFilePath },
-        fail: function () { }
-      })
+      }
+      const draw = function (img) {
+        poster.drawPoster(canvas, dpr, data, img)
+        self.posterCanvas = canvas
+        // 预生成临时文件，供转发卡片当缩略图
+        wx.canvasToTempFilePath({
+          canvas: canvas,
+          success: function (r) { self.posterTemp = r.tempFilePath },
+          fail: function () { }
+        })
+      }
+      if (mapPath && canvas.createImage) {
+        const img = canvas.createImage()
+        img.onload = function () { draw(img) }
+        img.onerror = function () { draw(null) }
+        img.src = mapPath
+      } else {
+        draw(null)
+      }
     })
   },
 
