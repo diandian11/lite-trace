@@ -90,22 +90,38 @@ Page({
           })
         } catch (e) { self.tryStaticMap(openStyled, openMapped) }
       }, 900)
-      // 总兑底：3秒还没结果直接走示意版，防卡 loading
-      setTimeout(openStyled, 3000)
+      // 总兑底：5秒还没结果直接走示意版，防卡 loading
+      setTimeout(openStyled, 5000)
     } catch (e) { this.tryStaticMap(openStyled, openMapped) }
   },
 
   // 静态图海报：轨迹+起终点由腾讯服务端烘焙进图，免对齐问题
+  // 失败时弹窗器出微信原始报错，方便定位（域名白名单/key配额等）
   tryStaticMap(openStyled, openMapped) {
     const url = this.staticMapUrl()
     if (!url) return openStyled()
     wx.downloadFile({
       url: url,
       success: function (r) {
-        if (r.statusCode === 200 && r.tempFilePath) openMapped(r.tempFilePath)
-        else openStyled()
+        if (r.statusCode === 200 && r.tempFilePath) {
+          openMapped(r.tempFilePath)
+        } else {
+          openStyled()
+          wx.showModal({
+            title: '地图服务返回 ' + r.statusCode,
+            content: 'key 或参数可能有问题，截图发给小助手',
+            showCancel: false
+          })
+        }
       },
-      fail: function () { openStyled() }
+      fail: function (e) {
+        openStyled()
+        wx.showModal({
+          title: '真实地图获取失败',
+          content: (e && e.errMsg) || '未知错误',
+          showCancel: false
+        })
+      }
     })
   },
 
@@ -173,7 +189,10 @@ Page({
       if (mapPath && canvas.createImage) {
         const img = canvas.createImage()
         img.onload = function () { draw(img) }
-        img.onerror = function () { draw(null) }
+        img.onerror = function () {
+          draw(null)
+          wx.showToast({ title: '地图图解码失败，已用示意版', icon: 'none' })
+        }
         img.src = mapPath
       } else {
         draw(null)
