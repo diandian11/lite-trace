@@ -3,6 +3,7 @@ const sport = require('../../utils/sport')
 const stepcounter = require('../../utils/stepcounter')
 const geo = require('../../utils/geo')
 const voice = require('../../utils/voice')
+const achievements = require('../../utils/achievements')
 
 // 室内按步频自动识别
 function inAutoType(cadence) { return cadence >= 115 ? 'jog' : 'walk' }
@@ -692,6 +693,8 @@ Page({
         rec.unit = '步'
         rec.cadence = cadence
       }
+      const bests = store.newBestsOf(rec)
+      const achBefore = achievements.evaluate(store.stats())
       store.pushOfDay(store.K.sport, store.today(), rec)
       store.saveTrack(ts, geo.simplify(this.trackPts, 8, 800))
       wx.vibrateShort({ type: 'light' })
@@ -701,6 +704,7 @@ Page({
         icon: 'success'
       })
       this.setData({ viewDate: store.today() })
+      this.celebrate(bests, achBefore)
     } else {
       if (steps < 5 || sec < 30) {
         wx.showToast({ title: '步数太少，本次未保存', icon: 'none' })
@@ -708,18 +712,48 @@ Page({
       }
       const minutes = Math.max(1, Math.round(sec / 60))
       const kcal = sport.kcal(t.key, minutes, this.weightKg(), 'mid')
-      store.pushOfDay(store.K.sport, store.today(), {
+      const rec = {
         typeKey: t.key, name: t.name, emoji: t.emoji,
         minutes: minutes, count: steps, unit: '步',
         intensity: '实时', source: 'live', cadence: cadence,
         kcal: kcal, ts: Date.now()
-      })
+      }
+      const bests = store.newBestsOf(rec)
+      const achBefore = achievements.evaluate(store.stats())
+      store.pushOfDay(store.K.sport, store.today(), rec)
       wx.vibrateShort({ type: 'light' })
       voice.endIndoor(steps, kcal)
       wx.showToast({ title: '已保存 +' + kcal + ' 千卡 · ' + steps + ' 步', icon: 'success' })
       this.setData({ viewDate: store.today(), calDrill: false })
+      this.celebrate(bests, achBefore)
     }
     this.buildCal()
     this.refresh()
+  },
+
+  // ---------- 破纪录 / 新成就庆祝 ----------
+  // bests: 保存前算好的破纪录列表；achBefore: 保存前的成就快照
+  celebrate(bests, achBefore) {
+    const after = achievements.evaluate(store.stats())
+    const news = achievements.diffDone(achBefore, after)
+    const msgs = []
+    if (bests && bests.length) {
+      msgs.push('🏆 刷新个人纪录：' + bests.map(function (b) { return b.label + ' ' + b.text }).join('，'))
+    }
+    if (news.length) {
+      msgs.push('🏅 解锁成就：' + news.map(function (a) { return a.icon + ' ' + a.name }).join('、'))
+    }
+    if (!msgs.length) return
+    // 延迟弹出，先让「已保存」toast 露脸
+    setTimeout(function () {
+      wx.vibrateShort({ type: 'heavy' })
+      voice.event('goaldone')
+      wx.showModal({
+        title: '🎉 干得漂亮！',
+        content: msgs.join('\n'),
+        showCancel: false,
+        confirmText: '继续加油'
+      })
+    }, 900)
   }
 })
