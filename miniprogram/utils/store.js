@@ -199,12 +199,8 @@ function bmr(profile, weightKg) {
 
 // 连续打卡天数（当日有运动/饮食/体重任意记录即算）
 function streak() {
-  const sp = dayMap(K.sport)
-  const di = dayMap(K.diet)
-  const wt = dayMap(K.weight)
-  function has(d) {
-    return (sp[d] && sp[d].length) || (di[d] && di[d].length) || wt[d] != null
-  }
+  const s = activeDaySet()
+  function has(d) { return s[d] != null }
   let n = 0
   const d = new Date()
   if (!has(fmtDate(d))) d.setDate(d.getDate() - 1) // 今天还没记，从昨天起算
@@ -215,25 +211,99 @@ function streak() {
   return n
 }
 
-// 成就统计
+// 所有有记录的日期集合（运动/饮食/体重任一）
+function activeDaySet() {
+  const sp = dayMap(K.sport)
+  const di = dayMap(K.diet)
+  const wt = dayMap(K.weight)
+  const s = {}
+  Object.keys(sp).forEach(function (d) { if (sp[d] && sp[d].length) s[d] = 1 })
+  Object.keys(di).forEach(function (d) { if (di[d] && di[d].length) s[d] = 1 })
+  Object.keys(wt).forEach(function (d) { if (wt[d] != null) s[d] = 1 })
+  return s
+}
+
+// 历史最长连续打卡天数（扫全部日期找最长连续段）
+function bestStreakEver() {
+  const ds = Object.keys(activeDaySet()).sort()
+  if (!ds.length) return 0
+  let best = 1, cur = 1
+  for (let i = 1; i < ds.length; i++) {
+    const gap = new Date(ds[i].replace(/-/g, '/')) - new Date(ds[i - 1].replace(/-/g, '/'))
+    cur = gap === 86400000 ? cur + 1 : 1
+    if (cur > best) best = cur
+  }
+  return best
+}
+
+// 成就统计（含 PB 各维度最大值，供成就系统与个人纪录页使用）
 function stats() {
   const sp = dayMap(K.sport)
   const di = dayMap(K.diet)
   const wt = dayMap(K.weight)
-  let sportSessions = 0, activeDays = 0, dietRecords = 0
+  let sportSessions = 0, dietRecords = 0, totalKcal = 0, totalKm = 0
+  let maxDist = 0, maxSteps = 0, maxMinutes = 0, maxKcal = 0
   const days = {}
   Object.keys(sp).forEach(function (d) {
     sportSessions += sp[d].length
     if (sp[d].length) days[d] = 1
+    sp[d].forEach(function (r) {
+      totalKcal += (+r.kcal || 0)
+      totalKm += (+r.distance || 0)
+      if (+r.distance > maxDist) maxDist = +r.distance
+      if (+r.count > maxSteps) maxSteps = +r.count
+      if (+r.minutes > maxMinutes) maxMinutes = +r.minutes
+      if (+r.kcal > maxKcal) maxKcal = +r.kcal
+    })
   })
   Object.keys(di).forEach(function (d) {
     dietRecords += di[d].length
     if (di[d].length) days[d] = 1
   })
   Object.keys(wt).forEach(function (d) { if (wt[d] != null) days[d] = 1 })
-  activeDays = Object.keys(days).length
-  const bestStreak = streak() // v1.1 再算历史最佳
-  return { sportSessions: sportSessions, activeDays: activeDays, dietRecords: dietRecords, bestStreak: bestStreak }
+  return {
+    sportSessions: sportSessions, activeDays: Object.keys(days).length,
+    dietRecords: dietRecords,
+    totalKcal: Math.round(totalKcal), totalKm: +totalKm.toFixed(1),
+    maxDist: maxDist, maxSteps: maxSteps, maxMinutes: maxMinutes, maxKcal: maxKcal,
+    streak: streak(), bestStreak: bestStreakEver()
+  }
+}
+
+// 个人纪录明细（各维度冠军记录：何时/什么运动）
+function pbs() {
+  const sp = dayMap(K.sport)
+  const out = { distance: null, minutes: null, kcal: null, steps: null }
+  function better(cur, val) { return !cur || val > cur.value }
+  Object.keys(sp).sort().forEach(function (d) {
+    sp[d].forEach(function (r) {
+      const cand = { name: r.name, emoji: r.emoji, date: d }
+      const dist = +r.distance || 0
+      const min = +r.minutes || 0
+      const kc = +r.kcal || 0
+      const st = +r.count || 0
+      if (dist > 0 && better(out.distance, dist)) out.distance = Object.assign({ value: dist }, cand)
+      if (min > 0 && better(out.minutes, min)) out.minutes = Object.assign({ value: min }, cand)
+      if (kc > 0 && better(out.kcal, kc)) out.kcal = Object.assign({ value: kc }, cand)
+      if (st > 0 && better(out.steps, st)) out.steps = Object.assign({ value: st }, cand)
+    })
+  })
+  return out
+}
+
+// 待保存记录将刷新的 PB（保存前调用；首条记录不算，避免开荒即刷屏）
+function newBestsOf(rec) {
+  const s = stats()
+  const out = []
+  const dist = +rec.distance || 0
+  const st = +rec.count || 0
+  const kc = +rec.kcal || 0
+  const min = +rec.minutes || 0
+  if (dist > 0 && s.maxDist > 0 && dist > s.maxDist) out.push({ label: '最远单次', text: dist.toFixed(2) + ' km' })
+  if (st > 0 && s.maxSteps > 0 && st > s.maxSteps) out.push({ label: '单次步数', text: st + ' 步' })
+  if (kc > 0 && s.maxKcal > 0 && kc > s.maxKcal) out.push({ label: '单次消耗', text: kc + ' 千卡' })
+  if (min > 0 && s.maxMinutes > 0 && min > s.maxMinutes) out.push({ label: '单次时长', text: min + ' 分钟' })
+  return out
 }
 
 // 清空全部数据（保留资料结构重置为默认）
@@ -273,6 +343,10 @@ module.exports = {
   removeTrack: removeTrack,
   bmr: bmr,
   streak: streak,
+  activeDaySet: activeDaySet,
+  bestStreakEver: bestStreakEver,
   stats: stats,
+  pbs: pbs,
+  newBestsOf: newBestsOf,
   clearAll: clearAll
 }
