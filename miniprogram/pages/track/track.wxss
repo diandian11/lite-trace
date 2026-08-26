@@ -106,3 +106,49 @@
   font-size: 30rpx;
   margin-top: 8rpx;
 }
+
+/* 海报入口按钮排 */
+.share-row { display: flex; gap: 20rpx; margin-top: 8rpx; }
+.share-row .share-btn { flex: 1; margin: 0; }
+.share-row .btn-ghost { padding: 14rpx 0; font-size: 30rpx; }
+
+/* 海报弹层 */
+.poster-mask {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(4, 20, 16, 0.82);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.poster-wrap { display: flex; flex-direction: column; align-items: center; }
+.poster-canvas {
+  width: 590rpx;
+  height: 856rpx;
+  border-radius: 20rpx;
+  background: #064e3b;
+  box-shadow: 0 24rpx 72rpx rgba(0, 0, 0, 0.55);
+}
+.poster-btns { display: flex; gap: 20rpx; margin-top: 30rpx; width: 590rpx; }
+.poster-btn { flex: 1; margin: 0; }
+.pb-save {
+  background: linear-gradient(135deg, #34D399, #10B981);
+  color: #ffffff;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 12rpx 0;
+}
+.pb-save::after { border: none; }
+.pb-share {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 12rpx 0;
+  border: none;
+}
+.pb-share::after { border: none; }
+.poster-tip { color: rgba(255, 255, 255, 0.45); font-size: 22rpx; margin-top: 18rpx; }

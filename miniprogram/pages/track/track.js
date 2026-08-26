@@ -1,12 +1,14 @@
-// 轻迹 LiteTrace · 轨迹详情页：地图回看户外运动轨迹
+// 轻迹 LiteTrace · 轨迹详情页：地图回看户外运动轨迹 + 海报分享
 const store = require('../../utils/store')
 const geo = require('../../utils/geo')
+const poster = require('../../utils/poster')
 
 Page({
   data: {
     rec: null, day: '', dateLabel: '',
     mapLat: 39.908, mapLng: 116.397, poly: [],
-    pace: '--\'--'
+    pace: '--\'--',
+    posterShow: false
   },
 
   onLoad(opts) {
@@ -25,6 +27,7 @@ Page({
     }
     this.recIdx = idx
     const pts = store.getTrack(ts) || []
+    this.pts = pts
     this.setData({
       rec: rec, day: day, dateLabel: day,
       pace: geo.fmtPace(rec.minutes * 60, (rec.distance || 0) * 1000),
@@ -43,6 +46,83 @@ Page({
   },
 
   toggleMapFull() { this.setData({ mapFull: !this.data.mapFull }) },
+
+  // ---------- 海报 ----------
+  makePoster() {
+    this.setData({ posterShow: true })
+    const self = this
+    // 等弹层渲染完成后再取 canvas 节点
+    setTimeout(function () { self.renderPoster() }, 150)
+  },
+
+  renderPoster() {
+    const self = this
+    const query = wx.createSelectorQuery().in(this)
+    query.select('#posterCanvas').fields({ node: true, size: true }).exec(function (res) {
+      if (!res || !res[0] || !res[0].node) return
+      const canvas = res[0].node
+      const dpr = (wx.getWindowInfo ? wx.getWindowInfo() : { pixelRatio: 2 }).pixelRatio || 2
+      const rec = self.data.rec
+      poster.drawPoster(canvas, dpr, {
+        date: self.data.day,
+        name: rec.emoji + ' ' + rec.name,
+        distance: rec.distance,
+        minutes: rec.minutes,
+        pace: self.data.pace,
+        kcal: rec.kcal,
+        steps: rec.count,
+        points: self.pts
+      })
+      self.posterCanvas = canvas
+      // 预生成临时文件，供转发卡片当缩略图
+      wx.canvasToTempFilePath({
+        canvas: canvas,
+        success: function (r) { self.posterTemp = r.tempFilePath },
+        fail: function () { }
+      })
+    })
+  },
+
+  closePoster() { this.setData({ posterShow: false }) },
+
+  savePoster() {
+    if (!this.posterCanvas) return
+    wx.canvasToTempFilePath({
+      canvas: this.posterCanvas,
+      success: function (res) {
+        wx.saveImageToPhotosAlbum({
+          filePath: res.tempFilePath,
+          success: function () { wx.showToast({ title: '已保存到相册', icon: 'success' }) },
+          fail: function (err) {
+            const msg = (err && err.errMsg) || ''
+            if (msg.indexOf('auth') >= 0 || msg.indexOf('denied') >= 0) {
+              wx.showModal({
+                title: '需要相册权限',
+                content: '请在设置中开启「保存到相册」权限后重试',
+                confirmText: '去设置',
+                success: function (r) { if (r.confirm) wx.openSetting() }
+              })
+            } else if (msg.indexOf('cancel') < 0) {
+              wx.showToast({ title: '保存失败', icon: 'none' })
+            }
+          }
+        })
+      },
+      fail: function () { wx.showToast({ title: '海报生成失败', icon: 'none' }) }
+    })
+  },
+
+  onShareAppMessage() {
+    const rec = this.data.rec
+    const title = rec
+      ? '我用轻迹完成了 ' + rec.distance + ' 公里 ' + rec.name + '，每天轻一点 💪'
+      : '轻迹 LiteTrace · 每天轻一点，每步留痕迹'
+    return {
+      title: title,
+      path: '/pages/today/today',
+      imageUrl: this.posterTemp || undefined
+    }
+  },
 
   del() {
     const self = this

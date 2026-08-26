@@ -34,5 +34,20 @@
     <view wx:if="{{rec.cadence}}" class="track-extra">平均步频 {{rec.cadence}} 步/分 · {{rec.intensity}}记录</view>
   </view>
 
-  <button class="btn-danger" bindtap="del">🗑 删除记录</button>
+  <view class="share-row">
+    <button class="btn-ghost share-btn" bindtap="makePoster">🖼 生成海报</button>
+    <button class="btn-danger share-btn" bindtap="del">🗑 删除记录</button>
+  </view>
+</view>
+
+<!-- 海报弹层 -->
+<view class="poster-mask" wx:if="{{posterShow}}" bindtap="closePoster">
+  <view class="poster-wrap" catchtap="">
+    <canvas type="2d" id="posterCanvas" class="poster-canvas"></canvas>
+    <view class="poster-btns" catchtap="">
+      <button class="poster-btn pb-save" bindtap="savePoster">📥 保存到相册</button>
+      <button class="poster-btn pb-share" open-type="share" plain>📤 分享好友</button>
+    </view>
+    <view class="poster-tip">点空白处关闭</view>
+  </view>
 </view>
