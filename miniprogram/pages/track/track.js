@@ -51,29 +51,43 @@ Page({
   makePoster() {
     this.setData({ posterShow: true })
     const self = this
-    // 有轨迹：先把地图视野缩回整条轨迹，再截图做海报底图；失败则纯风格化兑底
+    // 第一步：先立即画风格化兑底版，保证一定有内容
+    setTimeout(function () { self.renderPoster('') }, 150)
+    // 第二步：有轨迹且地图可用时，尝试截真实地图升级
     if (this.pts && this.pts.length >= 2 && !this.data.mapFull) {
+      setTimeout(function () { self.upgradeWithMap() }, 800)
+    }
+  },
+
+  // 截图升级：任一步失败都保留兑底版，不抛异常
+  upgradeWithMap() {
+    const self = this
+    try {
       const mctx = wx.createMapContext('trackmap')
       mctx.includePoints({ points: this.pts, padding: [60, 60, 60, 60] })
-      setTimeout(function () {
-        mctx.snapshot({
-          success: function (r) { self.renderPoster(r.tempImagePath) },
-          fail: function () { self.renderPoster('') }
-        })
-      }, 600)
-    } else {
-      setTimeout(function () { self.renderPoster('') }, 150)
-    }
+      if (typeof mctx.snapshot !== 'function') return
+      mctx.snapshot({
+        success: function (r) {
+          if (r && r.tempImagePath && self.data.posterShow) self.renderPoster(r.tempImagePath)
+        },
+        fail: function () { }
+      })
+    } catch (e) { /* 保留兑底版 */ }
   },
 
   renderPoster(mapPath) {
     const self = this
     const query = wx.createSelectorQuery().in(this)
-    query.select('#posterCanvas').fields({ node: true, size: true }).exec(function (res) {
-      if (!res || !res[0] || !res[0].node) return
+    query.select('#posterCanvas').fields({ node: true }).exec(function (res) {
+      if (!res || !res[0] || !res[0].node) {
+        // 节点未就绪，短重试一次
+        setTimeout(function () { self.renderPoster(mapPath) }, 400)
+        return
+      }
       const canvas = res[0].node
       const dpr = (wx.getWindowInfo ? wx.getWindowInfo() : { pixelRatio: 2 }).pixelRatio || 2
       const rec = self.data.rec
+      if (!rec) return
       const data = {
         date: self.data.day,
         name: rec.emoji + ' ' + rec.name,
@@ -85,7 +99,13 @@ Page({
         points: self.pts
       }
       const draw = function (img) {
-        poster.drawPoster(canvas, dpr, data, img)
+        try {
+          poster.drawPoster(canvas, dpr, data, img)
+        } catch (e) {
+          try { poster.drawPoster(canvas, dpr, data, null) } catch (e2) {
+            wx.showToast({ title: '海报绘制失败', icon: 'none' })
+          }
+        }
         self.posterCanvas = canvas
         // 预生成临时文件，供转发卡片当缩略图
         wx.canvasToTempFilePath({
@@ -106,6 +126,8 @@ Page({
   },
 
   closePoster() { this.setData({ posterShow: false }) },
+
+  noop() { },
 
   savePoster() {
     if (!this.posterCanvas) return

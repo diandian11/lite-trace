@@ -42,9 +42,9 @@
 
 <!-- 海报弹层 -->
 <view class="poster-mask" wx:if="{{posterShow}}" bindtap="closePoster">
-  <view class="poster-wrap" catchtap="">
+  <view class="poster-wrap" catchtap="noop">
     <canvas type="2d" id="posterCanvas" class="poster-canvas"></canvas>
-    <view class="poster-btns" catchtap="">
+    <view class="poster-btns" catchtap="noop">
       <button class="poster-btn pb-save" bindtap="savePoster">📥 保存到相册</button>
       <button class="poster-btn pb-share" open-type="share" plain>📤 分享好友</button>
     </view>
