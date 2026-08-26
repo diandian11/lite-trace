@@ -2,6 +2,7 @@
 const store = require('../../utils/store')
 const geo = require('../../utils/geo')
 const poster = require('../../utils/poster')
+const config = require('../../utils/config')
 
 Page({
   data: {
@@ -79,18 +80,55 @@ Page({
       mctx.includePoints({ points: this.pts, padding: [60, 60, 60, 60] })
       setTimeout(function () {
         try {
-          if (typeof mctx.snapshot !== 'function') return openStyled()
+          if (typeof mctx.snapshot !== 'function') return self.tryStaticMap(openStyled, openMapped)
           mctx.snapshot({
             success: function (r) {
-              (r && r.tempImagePath) ? openMapped(r.tempImagePath) : openStyled()
+              if (r && r.tempImagePath) openMapped(r.tempImagePath)
+              else self.tryStaticMap(openStyled, openMapped)
             },
-            fail: openStyled
+            fail: function () { self.tryStaticMap(openStyled, openMapped) }
           })
-        } catch (e) { openStyled() }
+        } catch (e) { self.tryStaticMap(openStyled, openMapped) }
       }, 900)
-      // 总兑底：2.6秒还没结果直接走示意版，防卡 loading
-      setTimeout(openStyled, 2600)
-    } catch (e) { openStyled() }
+      // 总兑底：3秒还没结果直接走示意版，防卡 loading
+      setTimeout(openStyled, 3000)
+    } catch (e) { this.tryStaticMap(openStyled, openMapped) }
+  },
+
+  // 静态图海报：轨迹+起终点由腾讯服务端烘焙进图，免对齐问题
+  tryStaticMap(openStyled, openMapped) {
+    const url = this.staticMapUrl()
+    if (!url) return openStyled()
+    wx.downloadFile({
+      url: url,
+      success: function (r) {
+        if (r.statusCode === 200 && r.tempFilePath) openMapped(r.tempFilePath)
+        else openStyled()
+      },
+      fail: function () { openStyled() }
+    })
+  },
+
+  // 组装静态图 URL：抽稀≤160点、6位小数；path自适应视野；起绿终红小圆点
+  staticMapUrl() {
+    if (!config.LBS_KEY) return ''
+    const pts = this.pts
+    if (!pts || pts.length < 2) return ''
+    const step = Math.max(1, Math.ceil(pts.length / 160))
+    const seg = []
+    for (let i = 0; i < pts.length; i += step) {
+      seg.push(pts[i].latitude.toFixed(6) + ',' + pts[i].longitude.toFixed(6))
+    }
+    const e = pts[pts.length - 1]
+    const endStr = e.latitude.toFixed(6) + ',' + e.longitude.toFixed(6)
+    if (seg[seg.length - 1] !== endStr) seg.push(endStr)
+    const s = pts[0]
+    return 'https://apis.map.qq.com/ws/staticmap/v2/' +
+      '?size=640x468' +
+      '&path=color:0x5EEAD4ff,weight:5|' + encodeURIComponent(seg.join(';')) +
+      '&markers=size:tiny|color:0x10B981|' + s.latitude.toFixed(6) + ',' + s.longitude.toFixed(6) +
+      '&markers=size:tiny|color:0xFB7185|' + endStr +
+      '&key=' + config.LBS_KEY
   },
 
   renderPoster(mapPath) {

@@ -72,13 +72,14 @@ function drawTrack(ctx, fitted) {
 }
 
 // 主入口：data = { date, name, distance, minutes, pace, kcal, steps, points }
-// mapImg: 可选，地图截图 Image 对象（MapContext.snapshot + canvas.createImage 加载）
+// mapImg: 可选，地图图 Image（snapshot截图 或 腾讯静态图），轨迹线已烘焙图内，不再自绘免错位
 function drawPoster(canvas, dpr, data, mapImg) {
   const W = 690, H = 1000
   canvas.width = W * dpr
   canvas.height = H * dpr
   const ctx = canvas.getContext('2d')
   ctx.scale(dpr, dpr)
+  const hasMap = !!(mapImg && mapImg.width)
 
   // 背景：深夜绿渐变
   const bg = ctx.createLinearGradient(0, 0, 0, H)
@@ -129,19 +130,17 @@ function drawPoster(canvas, dpr, data, mapImg) {
   if (data.steps) bits.push(data.steps + ' 步')
   ctx.fillText(bits.join('  ·  '), 48, 274)
 
-  // 轨迹卡：优先真实地图截图打底，夜色蒙层压暗融入主题；否则半透明卡
+  // 轨迹卡
   const boxX = 24, boxY = 318, boxW = W - 48, boxH = 470
-  const fitted = fitPoints(data.points, boxX, boxY, boxW, boxH, 42)
-  if (mapImg && mapImg.width) {
+  if (hasMap) {
+    // 真实地图打底：圆角裁剪 cover 铺满 + 夜色蒙层压杂色 + 细描边
     ctx.save()
     roundRect(ctx, boxX, boxY, boxW, boxH, 28)
     ctx.clip()
-    // cover 裁剪铺满
     const iw = mapImg.width, ih = mapImg.height
     const sc = Math.max(boxW / iw, boxH / ih)
-    const dw = iw * sc, dh = ih * sc
-    ctx.drawImage(mapImg, boxX + (boxW - dw) / 2, boxY + (boxH - dh) / 2, dw, dh)
-    // 夜色渐变蒙层：上浅下深，保轨迹可读又压住地图杂色
+    const dw2 = iw * sc, dh = ih * sc
+    ctx.drawImage(mapImg, boxX + (boxW - dw2) / 2, boxY + (boxH - dh) / 2, dw2, dh)
     const dim = ctx.createLinearGradient(0, boxY, 0, boxY + boxH)
     dim.addColorStop(0, 'rgba(4,33,28,0.45)')
     dim.addColorStop(0.5, 'rgba(4,33,28,0.32)')
@@ -149,26 +148,27 @@ function drawPoster(canvas, dpr, data, mapImg) {
     ctx.fillStyle = dim
     ctx.fillRect(boxX, boxY, boxW, boxH)
     ctx.restore()
-    // 细描边卡框
     roundRect(ctx, boxX, boxY, boxW, boxH, 28)
     ctx.strokeStyle = 'rgba(255,255,255,0.18)'
     ctx.lineWidth = 2
     ctx.stroke()
+    // 轨迹线/起终点已烘焙在地图图内（静态图服务端绘制 / 地图组件截图自带），不再叠加
   } else {
+    // 示意版：半透明卡 + 自绘辉光轨迹线
     roundRect(ctx, boxX, boxY, boxW, boxH, 28)
     ctx.fillStyle = 'rgba(255,255,255,0.06)'
     ctx.fill()
-  }
-  if (fitted) {
-    drawTrack(ctx, fitted)
-  } else if (!mapImg) {
-    // 无地图无轨迹兜底：居中提示
-    ctx.textAlign = 'center'
-    ctx.fillStyle = 'rgba(255,255,255,0.4)'
-    ctx.font = '28px sans-serif'
-    ctx.fillText('轨迹未保存', W / 2, boxY + boxH / 2 - 10)
-    ctx.font = '22px sans-serif'
-    ctx.fillText('下一次户外记录将自动留痕', W / 2, boxY + boxH / 2 + 30)
+    const fitted = fitPoints(data.points, boxX, boxY, boxW, boxH, 42)
+    if (fitted) {
+      drawTrack(ctx, fitted)
+    } else {
+      ctx.textAlign = 'center'
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'
+      ctx.font = '28px sans-serif'
+      ctx.fillText('轨迹未保存', W / 2, boxY + boxH / 2 - 10)
+      ctx.font = '22px sans-serif'
+      ctx.fillText('下一次户外记录将自动留痕', W / 2, boxY + boxH / 2 + 30)
+    }
   }
 
   // 底部 slogan
