@@ -28,13 +28,38 @@
   </view>
 
   <view class="card">
-    <view class="card-title">🏅 我的成就</view>
-    <view class="row3">
-      <view class="m"><view class="mv">{{stats.activeDays}}</view><view class="ml">累计打卡天</view></view>
-      <view class="m"><view class="mv">{{stats.sportSessions}}</view><view class="ml">运动次数</view></view>
-      <view class="m"><view class="mv">{{stats.dietRecords}}</view><view class="ml">饮食记录</view></view>
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">🏆 个人纪录 PB</view>
+      <view class="gap"></view>
+      <view class="hint">累计 {{stats.totalKm}} km · {{stats.totalKcal}} 千卡</view>
     </view>
-    <view class="hint" style="text-align:center;margin-top:16rpx;">连续打卡 {{stats.bestStreak}} 天 · 冲刺 21 天成就 🔥</view>
+    <view class="pb-grid">
+      <view class="pb-cell" wx:for="{{pbItems}}" wx:key="label">
+        <view class="pb-emoji">{{item.icon}}</view>
+        <view class="pb-main">
+          <view class="pb-label">{{item.label}}</view>
+          <view class="pb-val">{{item.val}}<text class="pb-unit"> {{item.unit}}</text></view>
+          <view class="pb-sub">{{item.sub}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="flex-row">
+      <view class="card-title" style="margin-bottom:0;">🏅 成就徽章</view>
+      <view class="gap"></view>
+      <view class="hint">已点亮 {{doneCount}}/{{totalCount}}</view>
+    </view>
+    <view class="badges">
+      <view class="badge {{item.done ? 'on' : ''}}" wx:for="{{badges}}" wx:key="id"
+            bindtap="tapBadge" data-i="{{index}}">
+        <view class="badge-icon">{{item.icon}}</view>
+        <view class="badge-name">{{item.name}}</view>
+        <view class="badge-pct">{{item.done ? '已点亮' : item.pct + '%'}}</view>
+      </view>
+    </view>
+    <view class="hint" style="text-align:center;margin-top:16rpx;">点亮成就：当前连续 {{stats.streak}} 天 · 最长连续 {{stats.bestStreak}} 天 🔥</view>
   </view>
 
   <view class="card">

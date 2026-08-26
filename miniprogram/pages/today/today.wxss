@@ -6,6 +6,22 @@
 .hero .date { font-size: 24rpx; opacity: 0.85; }
 .hero .hello { font-size: 34rpx; font-weight: 700; margin-top: 8rpx; }
 
+/* 连续打卡火焰：分级 + 摇曳动效 */
+.flame { display: inline-block; }
+.flame.f1 { font-size: 0.8em; opacity: 0.65; }
+.flame.f2 { font-size: 1em; animation: flicker 1.8s ease-in-out infinite; }
+.flame.f3 { font-size: 1.12em; letter-spacing: -2rpx; animation: flicker 1.4s ease-in-out infinite; }
+.flame.f4 {
+  font-size: 1.25em; letter-spacing: -2rpx;
+  animation: flicker 1.2s ease-in-out infinite;
+  text-shadow: 0 0 24rpx rgba(251, 191, 36, 0.95), 0 0 52rpx rgba(251, 146, 60, 0.55);
+}
+@keyframes flicker {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.1) rotate(-2deg); }
+  60% { transform: scale(0.96) rotate(1.5deg); }
+}
+
 .bar { height: 20rpx; background: #F3F4F6; border-radius: 10rpx; overflow: hidden; }
 .bar-fill { height: 100%; background: linear-gradient(90deg, #5EEAD4, #10B981); border-radius: 10rpx; transition: width 0.3s; }
 

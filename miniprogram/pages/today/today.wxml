@@ -1,7 +1,7 @@
 <view class="page">
   <view class="card hero">
     <view class="date">{{date}}</view>
-    <view class="hello">今天轻一点了吗？🔥 连续打卡 {{streak}} 天</view>
+    <view class="hello"><text wx:if="{{flameEmoji}}" class="flame {{flameCls}}">{{flameEmoji}}</text> {{hello}}</view>
   </view>
 
   <view class="card">

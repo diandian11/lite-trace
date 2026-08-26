@@ -1,2 +1,23 @@
 /* 我的页：主要复用全局样式 */
 .about { text-align: center; padding: 36rpx 28rpx; }
+
+/* 个人纪录 PB 卡 */
+.pb-grid { display: flex; flex-wrap: wrap; margin-top: 8rpx; }
+.pb-cell { width: 50%; display: flex; align-items: flex-start; padding: 20rpx 0; }
+.pb-emoji { font-size: 44rpx; margin-right: 16rpx; line-height: 1.2; }
+.pb-main { flex: 1; min-width: 0; }
+.pb-label { font-size: 24rpx; color: var(--lt-ink2); }
+.pb-val { font-size: 36rpx; font-weight: 800; color: var(--lt-primary-deep); margin-top: 2rpx; font-variant-numeric: tabular-nums; }
+.pb-unit { font-size: 22rpx; font-weight: 400; color: var(--lt-ink3); }
+.pb-sub { font-size: 20rpx; color: var(--lt-ink3); margin-top: 2rpx; }
+
+/* 成就徽章墙 */
+.badges { display: flex; flex-wrap: wrap; margin-top: 20rpx; }
+.badge { width: 33.333%; text-align: center; padding: 22rpx 0 16rpx; border-radius: 16rpx; box-sizing: border-box; }
+.badge-icon { font-size: 52rpx; filter: grayscale(1); opacity: 0.28; transition: opacity 0.3s; }
+.badge-name { font-size: 22rpx; margin-top: 8rpx; color: var(--lt-ink2); }
+.badge-pct { font-size: 20rpx; color: var(--lt-ink3); margin-top: 2rpx; }
+.badge.on { background: #ECFDF5; }
+.badge.on .badge-icon { filter: none; opacity: 1; }
+.badge.on .badge-name { color: var(--lt-primary-deep); font-weight: 600; }
+.badge.on .badge-pct { color: var(--lt-primary); }
