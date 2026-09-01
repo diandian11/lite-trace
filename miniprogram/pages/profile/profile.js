@@ -69,11 +69,24 @@ Page({
   bindTarget(e) { this.setData({ targetWeight: e.detail.value }) },
   save() {
     const p = store.getProfile()
-    p.name = this.data.name
+    const height = +this.data.height
+    const birthYear = +this.data.birthYear
+    const target = +this.data.targetWeight
+    const thisYear = new Date().getFullYear()
+    if (!height || height < 50 || height > 250) {
+      wx.showToast({ title: '身高填 50~250 cm', icon: 'none' }); return
+    }
+    if (!birthYear || birthYear < 1920 || birthYear > thisYear) {
+      wx.showToast({ title: '出生年填 1920~' + thisYear, icon: 'none' }); return
+    }
+    if (!target || target < 25 || target > 300) {
+      wx.showToast({ title: '目标体重填 25~300 kg', icon: 'none' }); return
+    }
+    p.name = (this.data.name || '').trim().slice(0, 20)
     p.gender = this.data.genderIndex === 1 ? 'female' : 'male'
-    p.height = +this.data.height || 170
-    p.birthYear = +this.data.birthYear || 1995
-    p.targetWeight = +this.data.targetWeight || 65
+    p.height = height
+    p.birthYear = birthYear
+    p.targetWeight = target
     store.saveProfile(p)
     wx.showToast({ title: '已保存', icon: 'success' })
   },
