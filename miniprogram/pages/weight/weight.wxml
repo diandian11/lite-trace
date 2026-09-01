@@ -20,12 +20,39 @@
   </view>
 
   <view class="card">
+    <view class="card-title">📈 体重趋势</view>
+    <view class="range-tabs">
+      <view class="range-tab {{range === '30' ? 'on' : ''}}" bindtap="setRange" data-range="30">近1月</view>
+      <view class="range-tab {{range === '90' ? 'on' : ''}}" bindtap="setRange" data-range="90">近3月</view>
+      <view class="range-tab {{range === '365' ? 'on' : ''}}" bindtap="setRange" data-range="365">近1年</view>
+    </view>
+    <view wx:if="{{chartEmpty}}" class="empty chart-empty">记录几天后，这里会长出你的曲线 🌱</view>
+    <view wx:else>
+      <view class="bmi-row">
+        <view class="bmi-chip" style="background:{{bmiColor}}1A;color:{{bmiColor}};">
+          BMI {{bmi || '--'}}{{bmiLabel ? ' · ' + bmiLabel : ''}}
+        </view>
+        <view wx:if="{{healthyMin}}" class="bmi-hint">健康 {{healthyMin}}~{{healthyMax}} kg</view>
+      </view>
+      <canvas type="2d" id="trendChart" class="trend-canvas"></canvas>
+      <view class="legend">
+        <view class="legend-item"><view class="dot" style="background:var(--lt-primary);"></view>体重</view>
+        <view class="legend-item"><view class="dot" style="background:rgba(16,185,129,0.15);"></view>健康区间</view>
+        <view class="legend-item"><view class="dot dot-dash"></view>目标</view>
+      </view>
+    </view>
+    <view wx:if="{{advice}}" class="advice advice-{{advice.level}}">
+      <text class="advice-icon">{{advice.icon}}</text>
+      <text class="advice-text">{{advice.text}}</text>
+    </view>
+  </view>
+
+  <view class="card">
     <view class="card-title">历史记录</view>
     <view wx:if="{{records.length === 0}}" class="empty">还没有称重记录</view>
     <view wx:for="{{records}}" wx:key="date" class="item">
       <view class="item-main"><view class="item-title">{{item.date}}</view></view>
       <view class="item-kcal normal">{{item.kg}} kg</view>
     </view>
-    <view class="hint" style="margin-top:12rpx;">📈 趋势折线图将在 v1.1 上线</view>
   </view>
 </view>

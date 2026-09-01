@@ -1,2 +1,35 @@
 /* 体重页：主要复用全局样式 */
 .item-kcal.normal { color: var(--lt-ink); font-weight: 600; }
+
+/* 趋势卡片 */
+.range-tabs { display: flex; gap: 12rpx; margin-bottom: 16rpx; }
+.range-tab {
+  font-size: 24rpx; color: var(--lt-ink2); padding: 8rpx 24rpx;
+  border-radius: 999rpx; background: rgba(0,0,0,0.04);
+}
+.range-tab.on { background: var(--lt-primary); color: #fff; font-weight: 600; }
+
+.chart-empty { padding: 60rpx 0; text-align: center; }
+
+.bmi-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12rpx; }
+.bmi-chip { font-size: 24rpx; font-weight: 700; padding: 6rpx 20rpx; border-radius: 999rpx; }
+.bmi-hint { font-size: 22rpx; color: var(--lt-ink3); }
+
+.trend-canvas { width: 100%; height: 460rpx; }
+
+.legend { display: flex; gap: 28rpx; margin-top: 8rpx; }
+.legend-item { display: flex; align-items: center; font-size: 22rpx; color: var(--lt-ink3); }
+.legend .dot { width: 16rpx; height: 16rpx; border-radius: 50%; margin-right: 8rpx; }
+.legend .dot-dash {
+  background: repeating-linear-gradient(90deg, var(--lt-accent) 0 6rpx, transparent 6rpx 12rpx);
+  border-radius: 0; height: 8rpx;
+}
+
+.advice {
+  display: flex; align-items: center; margin-top: 16rpx;
+  padding: 16rpx 20rpx; border-radius: 16rpx; font-size: 24rpx; line-height: 1.5;
+}
+.advice-icon { margin-right: 12rpx; }
+.advice-good { background: rgba(16,185,129,0.10); color: #047857; }
+.advice-stable { background: rgba(56,189,248,0.10); color: #0369A1; }
+.advice-warn { background: rgba(245,158,11,0.12); color: #B45309; }
